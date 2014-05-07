@@ -28,7 +28,12 @@ cat $ANALYSISDIR/$PROJ/pairs.txt | while read PAT TSAM NSAM; do
     NBAM=`ls $BAMDIR | grep $NSAM`;
     OUTPUTNAME=$PAT-$TSAM-$NSAM    
     echo $TBAM, $NBAM
-	 java -Xmx4g -jar ~/bin/muTect-1.1.4.jar --analysis_type MuTect --reference_sequence $REF --dbsnp $DBSNP --cosmic $COSMIC --input_file:normal $NBAM --input_file:tumor $TBAM --out $SNVDIR/$OUTPUTNAME.mutect --coverage_file $COVDIR/$OUTPUTNAME.coverage.wig.txt --vcf $SNVDIR/$OUTPUTNAME.mutect.vcf &
+	if [ -f "$SNVDIR/$OUTPUTNAME.mutect" ]; then
+        echo "$SNVDIR/$OUTPUTNAME.mutect present."
+    else 
+        echo "$SNVDIR/$OUTPUTNAME.mutect not present."
+        java -Xmx4g -jar ~/bin/muTect-1.1.4.jar --analysis_type MuTect --reference_sequence $REF --dbsnp $DBSNP --cosmic $COSMIC --input_file:normal $NBAM --input_file:tumor $TBAM --out $SNVDIR/$OUTPUTNAME.mutect --coverage_file $COVDIR/$OUTPUTNAME.coverage.wig.txt --vcf $SNVDIR/$OUTPUTNAME.mutect.vcf > $SNVDIR/$OUTPUTNAME.log &
+    fi
 done
 
 exit 0
