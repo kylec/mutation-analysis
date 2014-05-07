@@ -3,7 +3,7 @@ library(expands)
 args <- commandArgs(TRUE)
 
 basename = args[1]
-snvFile = paste(basename, "mutect.expands_snv", sep=".")
+snvFile = paste(basename, "combined", sep=".")
 cnFile = paste(basename, "copynumber.dnacopy", sep=".")
 
 # read snv file
@@ -16,8 +16,9 @@ cat("reading cnv.")
 cbs = read.table(cnFile, sep="\t", header=F)
 cbs = cbs[,c(1,2,3,5)]
 colnames(cbs) = c("chr", "startpos","endpos", "CN_Estimate")
+head(cbs)
 # remove log2 ratio
-cbs$CN_Estimate = 2^cbs$CN_Estimate
+cbs$CN_Estimate = (2^cbs$CN_Estimate)*2
 cbs = data.matrix(cbs)
 
 # step by step expands
@@ -39,3 +40,4 @@ dev.off()
 aQ=assignQuantityToSP(cbs, aM$dm)
 tr=buildPhylo(aQ,snvF)
 plot(tr,cex=2.5)
+write.table(aM$dm, file=paste(snvF,"sps", sep="."))
