@@ -24,7 +24,7 @@ file.close()
 file = open(args.input,'r')
 #output_file = open(args.output,'w')
 #output_file.write(file.readline())
-print file.readline().rstrip('\n')
+print file.readline().rstrip('\n') + "\t" + "\t".join(['region_type', 'region_name', 'mut_type', 'genename'])
 
 for line in file:
     data = line.rstrip('\n').split('\t')
