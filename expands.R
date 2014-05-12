@@ -24,17 +24,4 @@ cbs = data.matrix(cbs)
 
 # run expands
 cat("running expands.")
-runExPANdS(snv, cbs, maxScore=2.5, max_PM=6, precision=NA,plotF=3,snvF=basename,maxN=8000,region=NA)
-
-# write snvs
-write.table(aM$dm, file=paste(basename,"sps", sep="."), quote=FALSE, sep="\t")
-
-# plot sps
-png(paste(basename, "sps", "png", sep="."))
-plotSPs(aM$dm, basename,cex=1)
-dev.off()
-
-#plot trees
-png(paste(basename, "tree", "png", sep="."))
-plot(tr,cex=2.5)
-dev.off()
+runExPANdS(snv, cbs, maxScore=2.5, max_PM=6, precision=NA,plotF=2,snvF=basename,maxN=8000,region=NA)
