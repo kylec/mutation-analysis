@@ -10,7 +10,20 @@ cnFile = paste(basename, "copynumber.dnacopy", sep=".")
 
 # read snv file
 cat("reading snv.")
+
 snv = read.table(snvFile, sep="\t", header=T)
+# Filter loh in snv file
+head(snv)
+b = snv[which(snv$PN_B==1),]
+sd_num = 1.5
+if (dim(b)[1] > 1) {
+  mean_af = mean(b$AF_Tumor)
+  sd_af = sd(b$AF_Tumor)
+  print(paste(basename, round(mean_af,3), round(sd_af,3), sep="\t"))
+  # keep filtered loh (x sd from mean) and somatic
+  snv = snv[which(snv$PN_B==1 & (snv$AF_Tumor <= mean_af-sd_num*sd_af | snv$AF_Tumor >= mean_af+sd_num*sd_af) | snv$PN_B ==0), ]
+}
+
 snv = data.matrix(snv)
 
 # read cnv file
