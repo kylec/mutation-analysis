@@ -1,3 +1,5 @@
+# sh haplohseq2Expands.sh [proj dir]
+
 PROJ=$1
 cd $PROJ/haplohseq
 for SAMPLE in `ls *.events.dat | cut -d. -f1 ` ; do
@@ -13,7 +15,7 @@ for SAMPLE in `ls *.events.dat | cut -d. -f1 ` ; do
         sed '1d' $SAMPLE.events.dat > $EVENT
         
         # format posterior file to look like expands snv input 
-        sed '1d' $SAMPLE.posterior.dat | awk '{FS=OFS="\t"; print $1, $2-1, $2, $9, 1}' > $SNV
+        sed '1d' $SAMPLE.posterior.dat | awk '{FS=OFS="\t"; print $1, $2-1, $2, 1-$9, 1}' > $SNV
         
         # intersect
         intersectBed -a $SNV -b $EVENT  -wa | cut -f1,3- | sed 's/chr//g' > ../expands/$LOH
@@ -23,7 +25,7 @@ for SAMPLE in `ls *.events.dat | cut -d. -f1 ` ; do
 done
 
 # Combined snv loh
-cd $RROJ/expands
+cd $PROJ/expands
 
 for SNV in `ls *mutect*snv`; do
     SAMPLE=`echo $SNV | cut -d- -f2`
