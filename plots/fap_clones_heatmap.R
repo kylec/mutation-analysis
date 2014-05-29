@@ -131,7 +131,7 @@ for (i in 1:length(f)) {
     }
   }
   rownames(patient_heatmap) = yaxis_text
-  genes_legend = data.frame(name=c("vogelstein", "r spondin", "hyper", "nonhyper"), value = c("*", "^", "o", "x"))
+  genes_legend = data.frame(name=c("* vogelstein", "^ r_spondin", "o hyper", "x nonhyper"), x=c(Inf, Inf, Inf, Inf), y=rev(seq(length(yaxis_text)-5,length(yaxis_text),length.out=4)))
   
   # filter to non-singleton hits
   format_data = melt(patient_heatmap)
@@ -144,22 +144,27 @@ for (i in 1:length(f)) {
   if (length(universe) > 80){
     resize= .2
   } else {
-    resize= .6
+    resize= .5
   } 
   
   (p <- ggplot(format_data, aes(x=sample, y=variable)) + geom_tile(aes(fill = value), colour="black") 
-   + scale_fill_gradient(name="AF", low = "white",high = "steelblue", limits=c(0,1)) 
-   + theme_grey(base_size = base_size*resize) 
-   + labs(x = "", y= "") + scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) 
-   + theme(legend.position = "right", axis.ticks = element_blank(), 
-           axis.text.x = element_text(size=base_size*resize, angle=90, hjust=0, vjust=.5, colour=xaxis_text_colors),
-           axis.text.y = element_text(colour=yaxis_text_colors)
-           )
-   + coord_fixed(ratio=1)
-  )  
-  # todo: add geom_text for legend
+  + scale_fill_gradient(name="AF", low = "white",high = "steelblue", limits=c(0,1), guide = guide_legend(reverse=TRUE))
+  + theme_grey() 
+  + labs(x = "", y= "") + scale_x_discrete(expand = c(0, 0)) + scale_y_discrete(expand = c(0, 0)) 
+  + theme(legend.position = "top", axis.ticks = element_blank(), 
+          axis.text.x = element_text(size=base_size*resize, angle=90, hjust=0, vjust=.5, colour=xaxis_text_colors),
+          axis.text.y = element_text(size=base_size*resize, colour=yaxis_text_colors)
+          ) 
+  + coord_fixed(ratio=1) 
+  + geom_text(data=genes_legend, aes(label=name, x=x, y=y), size=base_size*resize^2, hjust = -0.2, vjust=0)
+  )
   
-  ggsave(heatmap_img, p) 
+  # clip off end to allow genes legend
+  gt <- ggplot_gtable(ggplot_build(p))
+  gt$layout$clip[gt$layout$name == "panel"] <- "off"
+  
+  # allow to save grob as ggplot
+  ggsave <- ggplot2::ggsave; body(ggsave) <- body(ggplot2::ggsave)[-2]
+  ggsave(heatmap_img, arrangeGrob(gt))
   
 } # end of sample groupings loop
-
