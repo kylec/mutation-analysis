@@ -13,7 +13,7 @@ args = parser.parse_args()
 # read annotation
 # dictionary for annotation
 anno=dict()
-file = open('fap_mutect.report','r')
+file = open('/Users/kyle_air/Projects/fap/expands/fap_mutect.report','r')
 for line in file:
     data = line.rstrip('\n').split('\t')
     anno['\t'.join(data[0:2])] = '\t'.join([data[3],data[6], data[7],data[8],data[9]])
