@@ -15,10 +15,10 @@ fd=data.frame(variable = c(rep("APC-indel",2), rep("chr5-deletion", 5)),
 
 
 # volgelstein gene list
-vogelstein = system("cat ../crc_genes/vogelstein.txt", intern=T)
-r_spondin = system("cat ../crc_genes/r_spondin.txt", intern=T)
-hyper = system("cat ../crc_genes/tcga_hypermutated.txt", intern=T)
-nonhyper = system("cat ../crc_genes/tcga_nonhypermutated.txt", intern=T)
+vogelstein = system("cat ~/projects/fap/crc_genes/vogelstein.txt", intern=T)
+r_spondin = system("cat ~/projects/fap/crc_genes/r_spondin.txt", intern=T)
+hyper = system("cat ~/projects/fap/crc_genes/tcga_hypermutated.txt", intern=T)
+nonhyper = system("cat ~/projects/fap/crc_genes/tcga_nonhypermutated.txt", intern=T)
 
 #universe = mutated_genes
 #heatmap_img = paste("fap_clones_mut_heatmap", "png", sep=".")
@@ -79,4 +79,4 @@ for (i in 1:length(f)) {
   
 } # end of sample groupings loop
 colnames(output_df) = c("sample", "#clones", "Tumor%", "genes", "loh/indel")
-write.table(output_df, "test.txt", quote=FALSE, row.names=FALSE, sep="\t")
+write.table(output_df, "fap_clones_summary.tsv", quote=FALSE, row.names=FALSE, sep="\t")
