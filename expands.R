@@ -13,17 +13,30 @@ cat("reading snv.")
 snv = read.table(snvFile, sep="\t", header=T)
 
 # Filter loh in snv file
-b = snv[which(snv$PN_B==1),]
+loh = snv[which(snv$PN_B==1),]
 sd_num = 1.5
-if (dim(b)[1] > 1) {
-  mean_af = mean(b$AF_Tumor)
-  sd_af = sd(b$AF_Tumor)
+if (dim(loh)[1] > 1) {
+  mean_af = mean(loh$AF_Tumor)
+  sd_af = sd(loh$AF_Tumor)
   print(paste(basename, round(mean_af,3), round(sd_af,3), sep="\t"))
-  # keep filtered loh (x sd from mean) and somatic
-  snv = snv[which(snv$PN_B==1 & (snv$AF_Tumor <= mean_af-sd_num*sd_af | snv$AF_Tumor >= mean_af+sd_num*sd_af) | snv$PN_B ==0), ]
   
-  # set loh means across all markers
-  snv[which(snv$PN_B==1),]$AF_Tumor = mean_af
+  # original
+  # keep filtered loh (x sd from mean) and somatic
+  #snv = snv[which(snv$PN_B==1 & (snv$AF_Tumor <= mean_af-sd_num*sd_af | snv$AF_Tumor >= mean_af+sd_num*sd_af) | snv$PN_B ==0), ]
+  
+  # set loh means across > 0.5 markers, remove those < .5
+  loh = loh[which(loh$AF_Tumor > .5), ]
+  loh$AF_Tumor = mean(loh$AF_Tumor)
+  
+  # set loh means across < 0.5 markers
+  
+  
+  # set loh means separates for markers < 0.5 or markers > 0.5
+  
+  
+  # combined snv + processed loh markers
+  snv = rbind(snv[snv$PN_B==0,], loh)
+  
 }
 
 snv = data.matrix(snv)
