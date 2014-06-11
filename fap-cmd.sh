@@ -28,9 +28,21 @@ for a in `ls *.ann.tsv | cut -d. -f1`; do
     echo -e "$a\t$sp\t$num_sp\t$nonsyn\t$ontarget\t$raw"
 done
 
+# scp files down
+for a in snv_only loh_sd_15 loh_mean_both_05 loh_mean_above_05; do 
+    #scp kchang3@D1prphaplotype0:/usr/local/epi/home/kchang3/fap/expands/$a/*sps* $a/
+    echo $a
+    cd $a
+    
+    #for SAMPLE in `ls *.sps | cut -d. -f1`; do python /Users/kyle_air/Projects/mutation-analysis/mergeExpandsSNVAndVtoolsReport.py -i $SAMPLE.sps -o test > $SAMPLE.ann.tsv; done
 
-#### max sp per sample
-for a in *.tsv; do sample=`echo $a | cut -d. -f1`; max_sp=`cut -f9 $a | sort -u | egrep -v "SP|NA" | sort -k1n | tail -1`; echo -e "$sample\t$max_sp"; done
+    #### max sp per sample
+    for a in *.tsv; do sample=`echo $a | cut -d. -f1`; max_sp=`cut -f9 $a | sort -u | egrep -v "SP|NA" | sort -k1n | tail -1`; num_sp=`cut -f9 $a | sort -u | egrep -v "SP|NA" | wc -l`; echo -e "$sample\t$max_sp\t$num_sp"; done
+
+    cd ..
+done
+
+
 
 
 #### filter evs
@@ -42,3 +54,13 @@ for a in `ls ../*combined`; do file=`echo $a | cut -d"/" -f2`;  grep -v -f exclu
 
 # rename FAP files to vilar
 for a in `ls FAP*`; do b=`echo $a | cut -d- -f2`; c=`echo $a | cut -d- -f2-`; mv $a $b-$c; done
+
+
+###### varscan ######
+for a in *dnacopy; do
+    chr_count=`grep chr $a | wc -l`
+    if [ "$chr_count" -gt "0" ]; then
+        echo $a
+        egrep -v "chrM|chrX|chrY" $a | sed 's/chr//g' > tmp && mv tmp $a
+    fi
+done
