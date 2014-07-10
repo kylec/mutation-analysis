@@ -1,5 +1,6 @@
 # plot mutation spectrum of fap samples
-library
+library(ggplot2)
+library(gridExtra)
 setwd("~/Projects/fap/mutect")
 
 # evs coordinates to keep.
