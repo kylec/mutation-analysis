@@ -1,6 +1,6 @@
 library(cummeRbund)
 
-setwd("~/projects/fap/rna_seq")
+setwd("~/projects/fap/rna_seq/large_intestine_vs_small_intestine/")
 cuff<-readCufflinks()
 
 # add features
