@@ -1,26 +1,5 @@
 library(CHAT)
 
-# dir
-project_dir="~/projects/fap/"
-setwd(paste0(project_dir, "chat"))
-
-dd.dat = NULL
-samples = read.table(paste0(project_dir, "pairs.txt"),header=F,stringsAsFactors=F)
-# loop through patients.txt
-for (i in 1:length(samples$V2)) {
-  tumor=samples[i,]$V2
-  normal=samples[i,]$V3
-  AD=2
-  thr.cov=20
-  filename = paste0(tumor, ".raw.vcf")
-  seg.mat = ParseVCF(filename, tumor, normal, AD, thr.cov)
-
-  dd.tmp = getSegChr.Seq(seg.mat)
-  dd.dat = rbind(dd.dat, dd.tmp)
-
-}
-
-
 ## functions
 ParseVCF <- function(filename,tumor,normal,AD,thr.cov){
   vcf<-read.table(filename,sep='\t',header=F,stringsAsFactors=F)
@@ -94,7 +73,29 @@ getSegChr.Seq <- function(seg.mat,bin=1000,cbs=TRUE,thr.hets=0.15){
   return(dd.dat)
 }
 
+## main
+project_dir="~/Projects/fap/"
+setwd(paste0(project_dir, "chat"))
+
+dd.dat = NULL
+samples = read.table(paste0(project_dir, "pairs.txt"),header=F,stringsAsFactors=F)
+# loop through patients.txt
+for (i in 1:length(samples$V2)) {
+  tumor=samples[i,]$V2
+  normal=samples[i,]$V3
+  AD=2
+  thr.cov=20
+  filename = paste0(tumor, ".raw.vcf")
+  seg.mat = ParseVCF(filename, tumor, normal, AD, thr.cov)
+
+  dd.tmp = getSegChr.Seq(seg.mat)
+  dd.dat = rbind(dd.dat, dd.tmp)
+
+}
+
+
 #save segmentation data as .rdata
+sampleid="fap"
 seg.data=paste0(sampleid,".Rdata")
 seg_sAGP.data=paste0(sampleid,"_sAGP.Rdata")
 agp.txt = paste0(sampleid, "_AGP.txt")
