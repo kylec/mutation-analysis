@@ -1,9 +1,28 @@
-setwd("~/projects/fap/chat")
-filename="Vilar02.raw.vcf"
 library(CHAT)
-ParseVCF <- function(filename,tumor=11,normal=10,AD=2,thr.cov=20){
-  ## process one vcf file to obtain LRR and BAF markers
-  tumor="Vilar02"; normal="Vilar01"; AD=2; thr.cov=20
+
+# dir
+project_dir="~/projects/fap/"
+setwd(paste0(project_dir, "chat"))
+
+dd.dat = NULL
+samples = read.table(paste0(project_dir, "pairs.txt"),header=F,stringsAsFactors=F)
+# loop through patients.txt
+for (i in 1:length(samples$V2)) {
+  tumor=samples[i,]$V2
+  normal=samples[i,]$V3
+  AD=2
+  thr.cov=20
+  filename = paste0(tumor, ".raw.vcf")
+  seg.mat = ParseVCF(filename, tumor, normal, AD, thr.cov)
+
+  dd.tmp = getSegChr.Seq(seg.mat)
+  dd.dat = rbind(dd.dat, dd.tmp)
+
+}
+
+
+## functions
+ParseVCF <- function(filename,tumor,normal,AD,thr.cov){
   vcf<-read.table(filename,sep='\t',header=F,stringsAsFactors=F)
   # remove multi-allelic positions 
   vcf = vcf[which(nchar(vcf$V4) == 1 & nchar(vcf$V5) == 1), ]
@@ -11,8 +30,12 @@ ParseVCF <- function(filename,tumor=11,normal=10,AD=2,thr.cov=20){
   
   # determine tumor and normal column 
   header = unlist(strsplit(system(paste("grep CHROM", filename), intern=T), "\t"))
-  tumor = grep(tumor, header)
-  normal = grep(normal, header)
+  
+  # special - not every sample is Vilar## , just grep by number
+  #tumor = grep(tumor, header)
+  #normal = grep(normal, header)
+  tumor = grep(gsub("Vilar", "", tumor), header)
+  normal = grep(gsub("Vilar", "", normal), header)
 
   # index for columns that have allele data
   vv.a=which(vcf[,tumor]!='./.'&vcf[,normal]!='./.')
@@ -50,9 +73,9 @@ ParseVCF <- function(filename,tumor=11,normal=10,AD=2,thr.cov=20){
   colnames(seg.mat)=c('sampleID','chr','pos','LRR','BAF','BAF-n')
   return(seg.mat)
 }
+
 getSegChr.Seq <- function(seg.mat,bin=1000,cbs=TRUE,thr.hets=0.15){
-  # 
-  bin=1000; cbs=TRUE; thr.hets=0.15
+  sampleid=sub('.raw.vcf','',filename)
   dd.dat=c()
   id=seg.mat[1,1]
   for(cc in 1:22){
