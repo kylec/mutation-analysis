@@ -18,15 +18,18 @@ else
 fi
 
 
-    #echo $PAT $TSAM $NSAM
-	TBAM=`ls $BAMDIR | grep $TSAM`;
-    NBAM=`ls $BAMDIR | grep $NSAM`;
-    OUTPUTNAME=$OUTPUTDIR/$PAT-$TSAM-$NSAM
+#echo $PAT $TSAM $NSAM
+TBAM=`ls $BAMDIR | grep $TSAM`;
+NBAM=`ls $BAMDIR | grep $NSAM`;
+OUTPUTNAME=$OUTPUTDIR/$PAT-$TSAM-$NSAM
+if [ -f "$OUTPUTNAME.copynumber" ]; then
+    echo "$OUTPUTNAME.copynumber exists."
+else
     echo $TBAM, $NBAM
     echo `date` run samtools pileup.
-	samtools mpileup -q 1 -f $REF $NBAM $TBAM > $OUTPUTNAME.pileup
+    samtools mpileup -q 1 -f $REF $NBAM $TBAM > $OUTPUTNAME.pileup
 
-	# fix pileup fields
+    # fix pileup fields
     if [ "$?" == 0 ]; then
         echo `date` fix pileup fileds
         awk 'NF==9 && $4!=0' $OUTPUTNAME.pileup > $OUTPUTNAME.pileup.tmp && mv $OUTPUTNAME.pileup.tmp $OUTPUTNAME.pileup
@@ -38,7 +41,7 @@ fi
         echo `date` varscan copynumber.
         java -jar ~/bin/VarScan.jar copynumber $OUTPUTNAME.pileup $OUTPUTNAME --mpileup 1
         #java -jar ~/bin/VarScan.jar copynumber $OUTPUTNAME.pileup $OUTPUTNAME --mpileup 1
-	else
+    else
         echo `date` pileup failed.
     fi
 
@@ -48,3 +51,4 @@ fi
     else
         echo `date` copynumber failed.
     fi
+fi
