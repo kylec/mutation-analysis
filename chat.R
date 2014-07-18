@@ -1,4 +1,10 @@
 library(CHAT)
+## usage 
+## Rscript chat.R [project dir] [chat output dir] [output prefix] [coverage cutoff]
+## Rscript chat.R ~/Projects/fap chat fap 50
+
+## Args
+args <- commandArgs(TRUE)
 
 ## functions
 ParseVCF <- function(filename,tumor,normal,AD,thr.cov){
@@ -74,17 +80,21 @@ getSegChr.Seq <- function(seg.mat,bin=1000,cbs=TRUE,thr.hets=0.15){
 }
 
 ## main
-project_dir="~/Projects/fap/"
-setwd(paste0(project_dir, "chat"))
+project_dir = args[1]
+output_dir = args[2]
+sampleid=args[3] # outputname prefix for .Rdata  
+thr.cov=args[4]
 
+setwd(paste0(project_dir, "/", output_dir))
+print("Chat started.")
+print(paste("command line args: ", project_dir, output_dir, sampleid, thr.cov, sep=","))
 dd.dat = NULL
-samples = read.table(paste0(project_dir, "pairs.txt"),header=F,stringsAsFactors=F)
+samples = read.table(paste0(project_dir, "/", "pairs.txt"),header=F,stringsAsFactors=F)
 # loop through patients.txt
 for (i in 1:length(samples$V2)) {
   tumor=samples[i,]$V2
   normal=samples[i,]$V3
   AD=2
-  thr.cov=20
   filename = paste0(tumor, ".raw.vcf")
   seg.mat = ParseVCF(filename, tumor, normal, AD, thr.cov)
 
@@ -95,7 +105,6 @@ for (i in 1:length(samples$V2)) {
 
 
 #save segmentation data as .rdata
-sampleid="fap"
 seg.data=paste0(sampleid,".Rdata")
 seg_sAGP.data=paste0(sampleid,"_sAGP.Rdata")
 agp.txt = paste0(sampleid, "_AGP.txt")
