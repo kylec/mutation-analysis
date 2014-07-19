@@ -92,15 +92,24 @@ for a in `ls FAP*`; do b=`echo $a | cut -d- -f2`; c=`echo $a | cut -d- -f2-`; mv
 
 ###### varscan ######
 for a in *dnacopy; do
-    chr_count=`grep chr $a | wc -l`
-    if [ "$chr_count" -gt "0" ]; then
+    #chr_count=`grep chr $a | wc -l`
+    #if [ "$chr_count" -gt "0" ]; then
         echo $a
-        egrep -v "chrM|chrX|chrY" $a | sed 's/chr//g' > tmp && mv tmp $a
-    fi
+        egrep -v "M|X|Y|gl|hap" $a | sed 's/chr//g' > tmp && mv tmp $a
+    #fi
 done
 
 for a in *.called; do Rscript $HOME/mutation-analysis/dnacopy.R $a $a.dnacopy ; done
-for a in *.copynumnber; do Rscript $HOME/mutation-analysis/dnacopy.R $a $a.dnacopy ; done
+for a in *.copynumber; do 
+    if [ -e "$a.dnacopy" ]; then
+        echo "$a.dnacopy exists."
+    else 
+        q "Rscript $HOME/mutation-analysis/dnacopy.R $a $a.dnacopy" $a $a.log 8
+    fi
+done
+
+# when linking gc corrected copynumber
+for a in *dnacopy; do b=`echo $a | sed 's/called.//g'`; echo $a $b; done
 
 ###### absolute ######
 for a in `ls *pass.vcf | cut -d. -f1-3`; do 
@@ -114,7 +123,13 @@ done
 
 ###### mutect ######
 # filter mutect calls
-for a in FAP*.snv; do echo $a; sed '1d' $a | awk -F"\t" '$35!="REJECT" && $10!="UNCOVERED"' > $a.keep; done
+for a in *.mutect; do echo $a; 
+    if [ -f "$a.keep" ]; then
+        echo "$a.keep exists"
+    else
+        sed '1d' $a | awk -F"\t" '$35!="REJECT" && $10!="UNCOVERED"' > $a.keep
+    fi
+done
 
 # filter mutect vcf calls
 for a in `ls *.mutect.vcf | cut -d. -f1,2`; do grep -P "^#|PASS" $a.vcf > $a.pass.vcf; done
@@ -128,21 +143,104 @@ for a in `ls *.mutect.keep`; do
   intersectBed -a tmp -b $capture_file -wa | cut -f1,3- >> $out
   rm tmp
 done
+# count mutect chr
+for a in `ls *.mutect | head -n20`; do 
+    count=`cut -f1 $a | egrep -i -v "hap|gl|X|Y|M|un" | sort -u | wc -l`
+    echo $a $count
+done
 
 ###### expands ######
-cut_cmd="cut -d- -f1-3"
 # make snv in put for (TCGA)
+cut_cmd="cut -d- -f1-3"
+# make snv in put for (FAP)
+cut_cmd="cut -d- -f1"
 for a in *.keep ; do
+    echo $a
     PAT=`echo $a | $cut_cmd`
     OUTFILE=$PAT.combined
     echo -e "chr\tstartpos\tAF_Tumor\tPN_B" > $OUTFILE
-    sed '1d' $a | awk '{FS=OFS="\t"; print $1, $2, $22/($22+$21), 0}' >> $OUTFILE
+    sed '1d' $a | awk '{FS=OFS="\t"; print $1, $2, $22/($22+$21), 0}' | egrep -v "hap|gl|X|Y|M" | sed 's/chr//g' >> $OUTFILE
 done
 
 # link inputs (TCGA)
 mkdir expands; cd expands
 ln -s ../mutect/*combined .
-for a in ../varscan/*copynumber.dnacopy; do name=`basename $a | $cut_cmd`; echo $a $name.copynumber.dnacopy; done
+for a in ../../varscan/*copynumber.dnacopy; do name=`basename $a | $cut_cmd`; echo $a $name.copynumber.dnacopy; done
 
 # run expands
-for a in *.combined; do sample=`echo $a | cut -d. -f1`; Rscript ~/mutation-analysis/expands.R $sample > $sample.log &  done
+for a in *.dnacopy; do 
+    sample=`echo $a | cut -d. -f1`
+    q "Rscript ~/mutation-analysis/expands.R $sample > $sample.log" $sample $sample.log 10
+done
+
+
+#### RNA seq ####
+# submit tophat
+python ../scripts/submitTophat1Int.py "/RIS/home/scheet/projects/Vilar_FAP/sourcedata/set8_rnaseq-Mmus/*/*.fastq.gz" "/RIS/home/scheet/projects/Vilar_FAP/working/test/rna_seq/thout" "/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19" long 16 "100:00:00"
+
+# cufflink
+python scripts/submitCufflinks.py "/RIS/home/scheet/projects/Vilar_FAP/working/test/rna_seq/thout/*/accepted_hits.bam" "/RIS/home/scheet/projects/Vilar_FAP/working/test/rna_seq/clout" long 24 100:00:00
+
+# run this from the clout directory
+ls **/transcripts.gtf > assemblies.txt
+
+# create a single merged transcriptome annotation for samples
+python ../scripts/submitCuffmerge.py "/RIS/home/scheet/projects/Vilar_FAP/working/test/rna_seq/clout/assemblies.txt" "/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19" "fap_cuffmerge" "/RIS/home/scheet/projects/Vilar_FAP/working/test/rna_seq/clout" long 8 24:00:00
+
+# create sample groupings
+cd sample_groups
+dir=/RIS/home/scheet/projects/Vilar_FAP/working/test/rna_seq 
+for a in `grep DUODENUM samples.txt  | cut -f2`; do ls $dir/thout/tophat*$a/accepted_hits.bam; done > duodenum.txt
+for a in `grep COLON samples.txt  | cut -f2`; do ls $dir/thout/tophat*$a/accepted_hits.bam; done > colon.txt
+for a in `grep COLON samples.txt | grep POLYP | cut -f2`; do ls $dir/thout/tophat*$a/accepted_hits.bam; done > colon_polyp.txt
+for a in `grep COLON samples.txt | grep NORMAL | cut -f2`; do ls $dir/thout/tophat*$a/accepted_hits.bam; done > colon_normal.txt
+for a in `grep DUODENUM samples.txt | grep POLYP | cut -f2`; do ls $dir/thout/tophat*$a/accepted_hits.bam; done > duodenum_polyp.txt
+for a in `grep DUODENUM samples.txt | grep NORMAL | cut -f2`; do ls $dir/thout/tophat*$a/accepted_hits.bam; done > duodenum_normal.txt
+
+# cuffdiff
+proc=16
+python scripts/submitCuffdiff.py \
+"$dir/clout/fap_cuffmerge/merged.gtf" \
+"duodenum,colon" \
+"$dir/sample_groups/duodenum.txt" \
+"$dir/sample_groups/colon.txt" \
+"/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19" \
+"duodenum_vs_colon" \
+"$dir/cdout" \
+long $proc "100:00:00"
+
+python scripts/submitCuffdiff.py \
+"$dir/clout/fap_cuffmerge/merged.gtf" \
+"colon_polyp,colon_normal" \
+"$dir/sample_groups/colon_polyp.txt" \
+"$dir/sample_groups/colon_normal.txt" \
+"/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19" \
+"colon_polyp_vs_colon_normal" \
+"$dir/cdout" \
+long $proc "100:00:00"
+
+python scripts/submitCuffdiff.py \
+"$dir/clout/fap_cuffmerge/merged.gtf" \
+"colon_polyp,duodenum_polyp" \
+"$dir/sample_groups/colon_polyp.txt" \
+"$dir/sample_groups/duodenum_polyp.txt" \
+"/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19" \
+"colon_polyp_vs_duodenum_polyp" \
+"$dir/cdout" \
+long $proc "100:00:00"
+
+python scripts/submitCuffdiff.py \
+"$dir/clout/fap_cuffmerge/merged.gtf" \
+"duodenum_polyp,duodenum_normal" \
+"$dir/sample_groups/duodenum_polyp.txt" \
+"$dir/sample_groups/duodenum_normal.txt" \
+"/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19" \
+"duodenum_polyp_vs_duodenum_normal" \
+"$dir/cdout" \
+long $proc "100:00:00"
+
+
+
+#### CHAT ####
+# check for gatk error
+find . -name "*.vcf" -size 0k | xargs rm
