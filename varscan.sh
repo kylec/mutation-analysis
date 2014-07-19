@@ -1,10 +1,22 @@
+# call varscan if .copynumber is not present
+#
+#
+# Input: Tumor/normal BAMs
+# Output: .copynumber, .copynumber.called, .copynumber.dnacopy, .copynumber.called.dnacopy
+#
+# usage
+#       sh varscan.sh [patient id] [tumor id] [normal id] [project_name] [build] [analysis_dir]
+#       sh varscan.sh Vilar02 Vilar02 Vilar01 fap ucsc $HOME 
+#
+# kyle chang
+
 PAT=$1 
 TSAM=$2
 NSAM=$3
 PROJ=$4
 BUILD=$5
+ANALYSISDIR=$6
 
-ANALYSISDIR=$HOME
 BAMDIR=$ANALYSISDIR/$PROJ/bam/*.bam
 OUTPUTDIR=$ANALYSISDIR/$PROJ/varscan
 
@@ -17,8 +29,6 @@ else
     exit 1
 fi
 
-
-#echo $PAT $TSAM $NSAM
 TBAM=`ls $BAMDIR | grep $TSAM`;
 NBAM=`ls $BAMDIR | grep $NSAM`;
 OUTPUTNAME=$OUTPUTDIR/$PAT-$TSAM-$NSAM
@@ -51,4 +61,19 @@ else
     else
         echo `date` copynumber failed.
     fi
+
+    # dnacopy
+    if [ "$?" != 0 ]; then
+        echo `date` copycaller failed; exit 1
+    else 
+        Rscript $SCRIPSTDIR/dnacopy.R $OUTPUTNAME.copynumber $OUTPUTNAME.copynumber.dnacopy
+        Rscript $SCRIPSTDIR/dnacopy.R $OUTPUTNAME.copynumber.called $OUTPUTNAME.copynumber.called.dnacopy
+    fi 
+
+    if [ "$?" != 0 ]; then
+       echo `date` dnacopy failed; exit 1
+    fi
 fi
+
+echo `date` varscan done.
+exit 0
