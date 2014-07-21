@@ -66,8 +66,8 @@ else
     if [ "$?" != 0 ]; then
         echo `date` copycaller failed; exit 1
     else 
-        Rscript $SCRIPSTDIR/dnacopy.R $OUTPUTNAME.copynumber $OUTPUTNAME.copynumber.dnacopy
-        Rscript $SCRIPSTDIR/dnacopy.R $OUTPUTNAME.copynumber.called $OUTPUTNAME.copynumber.called.dnacopy
+        Rscript $SCRIPTSDIR/dnacopy.R $OUTPUTNAME.copynumber $OUTPUTNAME.copynumber.dnacopy
+        Rscript $SCRIPTSDIR/dnacopy.R $OUTPUTNAME.copynumber.called $OUTPUTNAME.copynumber.called.dnacopy
     fi 
 
     if [ "$?" != 0 ]; then
