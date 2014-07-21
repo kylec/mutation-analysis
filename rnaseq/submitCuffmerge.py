@@ -10,8 +10,9 @@ indexBaseDirectory = sys.argv[2]
 outPrefix = sys.argv[3]
 runDirectory = sys.argv[4]
 queue = sys.argv[5]
-procs = sys.argv[6]
-walltime = sys.argv[7]
+nodes = sys.argv[6]
+procs = sys.argv[7]
+walltime = sys.argv[8]
 
 # assemble cluster job
 output, input = popen2('qsub')
@@ -20,7 +21,7 @@ input.write('#PBS -N ' + assembliesFile + '\n')
 input.write('#PBS -d ' + runDirectory +'\n')
 input.write('#PBS -e ' + runDirectory + ' -o ' + runDirectory + '\n')
 input.write('#PBS -q ' + queue + '\n')
-input.write('#PBS -l procs=' + procs + ',walltime=' + walltime + '\n')
+input.write('#PBS -l nodes=' + nodes + ':ppn=' + procs + ',walltime=' + walltime + '\n')
 
 print("assembling transcripts from " + assembliesFile + " to " + outPrefix)
 
