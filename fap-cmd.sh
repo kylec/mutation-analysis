@@ -104,7 +104,7 @@ for a in *.copynumber; do
     if [ -e "$a.dnacopy" ]; then
         echo "$a.dnacopy exists."
     else 
-        q "Rscript $HOME/mutation-analysis/dnacopy.R $a $a.dnacopy" $a $a.log 8
+        q "Rscript $HOME/mutation-analysis/dnacopy.R $a $a.dnacopy" $a $a.log 1 8
     fi
 done
 
@@ -170,7 +170,7 @@ for a in ../../varscan/*copynumber.dnacopy; do name=`basename $a | $cut_cmd`; ec
 # run expands
 for a in *.dnacopy; do 
     sample=`echo $a | cut -d. -f1`
-    q "Rscript ~/mutation-analysis/expands.R $sample > $sample.log" $sample $sample.log 10
+    q "Rscript ~/mutation-analysis/expands.R $sample > $sample.log" $sample $sample.log 1 10
 done
 
 
