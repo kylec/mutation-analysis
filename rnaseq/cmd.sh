@@ -1,48 +1,56 @@
-grep "alignment rate" **/align_summary.txt
+#### set project params
 
-(1a) align rna with bowtie 1 for fusion search
-#### 1st batch of rnaseq ####
-python submitTophat1.py \
-"/RIS/home/scheet/projects/Vilar_FAP/sourcedata/set3-rnaseq-Hsap/**/*.fastq" \
-"/RIS/home/scheet/projects/Vilar_FAP/rnaseq-human/thout" \
-"/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19" \
-long 1 24 "100:00:00"
-
-#### 2nd batch of rnaseq ####
-python submitTophat1.py \
-"/RIS/home/scheet/projects/Vilar_FAP/sourcedata/set8-rnaseq-Hsap/**/*.fastq.gz" \
-"/RIS/home/scheet/projects/Vilar_FAP/rnaseq-human/thout" \
-"/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19" \
-long 1 24 "100:00:00"
-
-######################
+QUEUE=long
+NODES=1
+PROCS=24
+WALLTIME=100:00:00
+OUTPUTDIR=/RIS/home/scheet/projects/Vilar_FAP/rnaseq-human
+OUTPUTDIR=/RIS/home/scheet/projects/Vilar_FAP/working/test/rna_seq
+TOPHAT_REF=/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19
+CUFFMERGE=fap_hg19_cuffmerge
 
 ############ Human analysis ############
 
-# (1) align rna-seq reads to the genome
-python submitTophat.py \
+# (1) align rna with bowtie 1 for fusion search
+
+# 1st batch of rnaseq
+python $SCRIPTSDIR/submitTophat1.py \
 "/RIS/home/scheet/projects/Vilar_FAP/sourcedata/set3-rnaseq-Hsap/**/*.fastq" \
-"/RIS/home/fasaan/analysis/vilar_fap/rna_seq/thout" \
-"/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19" \
-long 24 "200:00:00"
+"$OUTPUTDIR/thout" \
+$TOPHAT_REF \
+$QUEUE $NODES $PROCS $WALLTIME
+
+# 2nd batch of rnaseq
+python $SCRIPTSDIR/submitTophat1.py \
+"/RIS/home/scheet/projects/Vilar_FAP/sourcedata/set8-rnaseq-Hsap/**/*.fastq.gz" \
+"$OUTPUTDIR/thout" \
+$TOPHAT_REF \
+$QUEUE $NODES $PROCS $WALLTIME
+
+# run tophat without fusionSearch, align directly to transcriptome
+python $SCRIPTSDIR/submitTophat1.py \
+"/RIS/home/scheet/projects/Vilar_FAP/sourcedata/set8-rnaseq-Hsap/**/*.fastq.gz" \
+"$OUTPUTDIR/thout" \
+$TOPHAT_REF \
+$QUEUE $NODES $PROCS $WALLTIME nofusion
 
 # (2) assemble expressed genes and transcripts
-python submitCufflinks.py \
-"/RIS/home/fasaan/analysis/vilar_fap/rna_seq/thout/**/accepted_hits.bam" \
-"/RIS/home/fasaan/analysis/vilar_fap/rna_seq/clout" \
-long 24 "200:00:00"
+python $SCRIPTSDIR/submitCufflinks.py \
+"$OUTPUTDIR/thout/*/accepted_hits.bam" \
+"$OUTPUTDIR/clout" \
+$QUEUE $NODES $PROCS $WALLTIME
 
 # (3) create a file that lists transcripts for each sample
 #     run this from the clout directory
 ls **/transcripts.gtf > assemblies.txt
 
 # (4) create a single merged transcriptome annotation for samples
-python submitCuffmerge.py \
-"/RIS/home/fasaan/analysis/vilar_fap/rna_seq/clout/assemblies.txt" \
-"/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19" \
-"fap_hg19_cuffmerge" \
-"/RIS/home/fasaan/analysis/vilar_fap/rna_seq/clout" \
-long 8 "24:00:00"
+python $SCRIPTSDIR/submitCuffmerge.py \
+"$OUTPUTDIR/clout/assemblies.txt" \
+$TOPHAT_REF \
+$CUFFMERGE \
+"$OUTPUTDIR/clout" \
+$QUEUE $NODES $PROCS $WALLTIME
 
 # (5) identify differentially expressed genes and transcripts
 python submitCuffdiff.py \
