@@ -13,8 +13,9 @@ indexBaseDirectory = sys.argv[5]
 outPrefix = sys.argv[6]
 runDirectory = sys.argv[7]
 queue = sys.argv[8]
-procs = sys.argv[9]
-walltime = sys.argv[10]
+nodes = sys.argv[9]
+procs = sys.argv[10]
+walltime = sys.argv[11]
 
 condition1Bams = []
 condition1File = open(condition1List, 'r')
@@ -33,7 +34,7 @@ input.write('#PBS -N ' + outPrefix + '\n')
 input.write('#PBS -d ' + runDirectory +'\n')
 input.write('#PBS -e ' + runDirectory + ' -o ' + runDirectory + '\n')
 input.write('#PBS -q ' + queue + '\n')
-input.write('#PBS -l procs=' + procs + ',walltime=' + walltime + '\n')
+input.write('#PBS -l nodes=' + nodes + ':ppn=' + procs + ',walltime=' + walltime + '\n')
 
 print("differential expression analysis for " + condition1List + " and " + condition2List + " (" + outPrefix + ")")
 
