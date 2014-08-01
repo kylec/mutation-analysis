@@ -62,6 +62,8 @@ $QUEUE $NODES $PROCS $WALLTIME
 
 # (6) identify differentially expressed genes and transcripts
 #for GROUP in large_intestine_polyp,large_instine_normal small_intestine_polyp,small_intestine_normal polyp,normal large_intestine,small_intestine 
+FILE=bam
+FILE=cxb
 for GROUP in colon_polyp,colon_normal duodenum_polyp,duodenum_normal polyp,normal colon,duodenum; do
 	GROUP1=`echo $GROUP | cut -d, -f1`
 	GROUP2=`echo $GROUP | cut -d, -f2`
@@ -69,8 +71,8 @@ for GROUP in colon_polyp,colon_normal duodenum_polyp,duodenum_normal polyp,norma
 	python $SCRIPT/submitCuffdiff.py \
 	"$OUTPUTDIR/clout/$CUFFMERGE/merged.gtf" \
 	$GROUP \
-	"$OUTPUTDIR/sample_groups/$GROUP1.txt" \
-	"$OUTPUTDIR/sample_groups/$GROUP2.txt" \
+	"$OUTPUTDIR/sample_groups/$GROUP1.$FILE.txt" \
+	"$OUTPUTDIR/sample_groups/$GROUP2.$FILE.txt" \
 	$TOPHAT_REF \
 	$GROUP \
 	"$OUTPUTDIR/cdout" \

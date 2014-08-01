@@ -4,6 +4,7 @@ import glob
 import time
 from popen2 import popen2
 from sets import Set
+import os
 
 inputFastqFilePattern = sys.argv[1]
 runDirectory = sys.argv[2]
@@ -19,8 +20,11 @@ for fname in dirList:
 	# get name for output file
         filename = fname.split('/')[len(fname.split('/')) - 1]
 	sampleName = fname.split('/')[len(fname.split('/')) - 2]
+	outputDirectory = sampleName
+	if os.path.exists(runDirectory + '/' + outputDirectory):
+		print outputDirectory + 'exists.'
+		continue
 	print('Processing ' + sampleName)
-	outputDirectory = sampleName + '_clout'
 
 	# assemble cluster job
 	output, input = popen2('qsub')
