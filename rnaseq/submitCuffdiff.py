@@ -31,6 +31,7 @@ for line in condition2File:
 output, input = popen2('qsub')
 input.write('#PBS -S /bin/bash\n')
 input.write('#PBS -N ' + outPrefix + '\n')
+input.write('#PBS -M kchang3@mdanderson.org\n')
 input.write('#PBS -d ' + runDirectory +'\n')
 input.write('#PBS -e ' + runDirectory + ' -o ' + runDirectory + '\n')
 input.write('#PBS -q ' + queue + '\n')
