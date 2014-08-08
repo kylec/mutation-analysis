@@ -113,6 +113,10 @@ for a in `ls *pass.snpeff.vcf | cut -d. -f1`; do
 done
 
 ###### mutect ######
+# fix fap sample name in vcf
+for a in *.pass.vcf; do awk '{FS=OFS="\t"; if ($1 ~ /#CHROM/) { gsub("Sample","",$0); gsub("_","",$0);}; print $0}' $a > tmp; mv tmp $a; done
+
+
 # filter mutect.keep by exome
 capture_file="/usr/local/epi/home/kchang3/references/SeqCap_EZ_Exome_v3_primary.bed"
 for a in `ls *.mutect.keep`; do
@@ -168,7 +172,7 @@ dir=/RIS/home/scheet/projects/Vilar_FAP/rnaseq-human/
 outputfile="bam"; outputdir=thout; filetype=accepted_hits.bam
 outputfile="cxb"; outputdir=cqout; filetype=abundances.cxb
 
-for a in `grep DUODENUM samples.txt  | cut -f2`; do ls $dir/$outputdir/tophat*$a/$file_type; done > duodenum.$outputfile.txt
+for a in `grep DUODENUM samples.txt  | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > duodenum.$outputfile.txt
 for a in `grep COLON samples.txt  | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > colon.$outputfile.txt
 for a in `grep COLON samples.txt | grep POLYP | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > colon_polyp.$outputfile.txt
 for a in `grep COLON samples.txt | grep NORMAL | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > colon_normal.$outputfile.txt
