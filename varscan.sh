@@ -42,7 +42,7 @@ else
     # fix pileup fields
     if [ "$?" == 0 ]; then
         echo `date` fix pileup fileds
-        awk 'NF==9 && $4!=0' $OUTPUTNAME.pileup > $OUTPUTNAME.pileup.tmp && mv $OUTPUTNAME.pileup.tmp $OUTPUTNAME.pileup
+        awk 'NF==9 && $4!=0 && $1 !~ /M|X|Y|GL|gl|hap/' $OUTPUTNAME.pileup > $OUTPUTNAME.pileup.tmp && mv $OUTPUTNAME.pileup.tmp $OUTPUTNAME.pileup
     else 
         echo `date` pileup failed.
     fi
