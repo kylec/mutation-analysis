@@ -35,6 +35,10 @@ elif [ "$BUILD" == "1g" ]; then
     REF=$ANALYSISDIR/references/Homo_sapiens_assembly19.fasta
     COSMIC=$ANALYSISDIR/references/b37_cosmic_v54_120711.vcf
     DBSNP=$ANALYSISDIR/references/dbsnp_137.b37.vcf
+elif [ "$BUILD" == "iot" ]; then
+    REF=$ANALYSISDIR/references/hg19.fasta
+    COSMIC=$ANALYSISDIR/references/hg19_iot_cosmic_v54_120711.vcf
+    DBSNP=$ANALYSISDIR/references/dbsnp_137.iot.vcf
 else 
     echo "ERROR: unknown build=$BUILD."
     exit 1
@@ -49,7 +53,7 @@ if [ -f "$SNVDIR/$OUTPUTNAME.mutect" ]; then
 else
     echo `date` mutect started.
     echo "java -Xmx4g -jar ~/bin/muTect-1.1.4.jar --analysis_type MuTect --reference_sequence $REF --dbsnp $DBSNP --cosmic $COSMIC --input_file:normal $NBAM --input_file:tumor $TBAM --out $SNVDIR/$OUTPUTNAME.mutect --coverage_file $COVDIR/$OUTPUTNAME.coverage.wig.txt --vcf $SNVDIR/$OUTPUTNAME.mutect.vcf"
-    $JAVA -Xmx4g -jar ~/bin/muTect-1.1.4.jar --analysis_type MuTect --reference_sequence $REF --dbsnp $DBSNP --cosmic $COSMIC --input_file:normal $NBAM --input_file:tumor $TBAM --out $SNVDIR/$OUTPUTNAME.mutect --coverage_file $COVDIR/$OUTPUTNAME.coverage.wig.txt --vcf $SNVDIR/$OUTPUTNAME.mutect.vcf
+    $JAVA -Xmx8G -Djava.io.tmpdir=$SNVDIR -jar ~/bin/muTect-1.1.4.jar --analysis_type MuTect --reference_sequence $REF --dbsnp $DBSNP --cosmic $COSMIC --input_file:normal $NBAM --input_file:tumor $TBAM --out $SNVDIR/$OUTPUTNAME.mutect --coverage_file $COVDIR/$OUTPUTNAME.coverage.wig.txt --vcf $SNVDIR/$OUTPUTNAME.mutect.vcf
     if [ "$?" == 0 ]; then
         # filter for pass mutations
         sed '1d' $SNVDIR/$OUTPUTNAME.mutect | awk -F"\t" '$35!="REJECT" && $10!="UNCOVERED"' > $SNVDIR/$OUTPUTNAME.mutect.keep
