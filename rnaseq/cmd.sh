@@ -2,13 +2,15 @@
 SCRIPT=$SCRIPTSDIR/rnaseq
 QUEUE=long
 NODES=1
-PROCS=24
 PROCS=24:bigmem
 WALLTIME=168:00:00
-OUTPUTDIR=/RIS/home/scheet/projects/Vilar_FAP/working/test/rna_seq
-OUTPUTDIR=/RIS/home/scheet/projects/Vilar_FAP/rnaseq-human
-TOPHAT_REF=/RIS/home/fasaan/resources/tophat_resources/mmus10/Mus_musculus/UCSC/mm10
-TOPHAT_REF=/RIS/home/fasaan/resources/tophat_resources/hg19/Homo_sapiens/UCSC/hg19
+QUEUE=verylong
+NODES=1
+PROCS=24:bigmem
+WALLTIME=1008:00:00
+OUTPUTDIR=$HOME/fap/rnaseq-human
+TOPHAT_REF=$HOME/references/tophat_resources/mmus10/Mus_musculus/UCSC/mm10
+TOPHAT_REF=$HOME/references/tophat_resources/hg19/Homo_sapiens/UCSC/hg19
 CUFFMERGE=fap_mm10_cuffmerge
 CUFFMERGE=fap_hg19_cuffmerge
 
