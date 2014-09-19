@@ -2,6 +2,9 @@ import argparse
 import re
 
 # add column with mutated cases
+# filter:
+#   skip non-exonic and synonymous
+#   at least one sample has af above threshold
 # Kyle Chang
 
 
@@ -16,7 +19,7 @@ index = samples.index('format')
 samples = samples[index+1:]
 #print samples
 
-print header.rstrip('\n') + '\t' + "mutated_cases"
+print header.rstrip('\n') + '\t' + "mutated_cases" + "\t" + "#_samples_>_af_cutoff"
 
 for line in file:
   fields = line.rstrip('\n').split('\t')
@@ -31,6 +34,8 @@ for line in file:
     refalt = fields[4] + fields[5]
     # index for matching sample name array and genotype info
     index = 0 
+    # count for sample with allele fraction > .05
+    sample_count = 0
     for field in fields:
       # found genotype column
       if re.search("GT:GQ", field):
@@ -55,10 +60,14 @@ for line in file:
             # simple case - there's only 1 alt cont
             af = dat[6]
 
+          # check if af is greater than > .05
+          if round(float(af),2) >= 0.05:
+            sample_count += 1
+
           # simplify samples
           mutCase = mutCase + samples[index].split('-')[1] + ':' + af + ','
         
         index = index + 1
 
-    # print line
-    print line.rstrip('\n') + "\t" + mutCase  
+    # print line only if at least one sample's af is greater than threshold
+    print line.rstrip('\n') + "\t" + mutCase + "\t" + str(sample_count) 
