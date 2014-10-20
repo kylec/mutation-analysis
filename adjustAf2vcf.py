@@ -24,7 +24,7 @@ def getBamReads(chr, start, end, ref, alt, bam):
 				baselen = max(len(ref), len(alt))
 				# extract pileup bases 
 				seq = pileupread.alignment.seq[pileupread.qpos:pileupread.qpos+baselen]
-				#print 'args' + ref+alt + ','+ str(baselen) + ','+ pileupread.alignment.seq[pileupread.qpos] + ',' + seq + ',indel=' + str(indel_count) + ',' + pileupread.alignment.qname + ',' + pileupread.alignment.seq + ', ' + str(pileupread.qpos) + ',indtrue' + str(pileupread.indel) + ',' + str(start) + ',' + pileupread.alignment.cigarstring	
+				#print 'args' + ref+alt + ','+ str(baselen) + ','+ pileupread.alignment.seq[pileupread.qpos] + ',' + seq + ',' + pileupread.alignment.qname + ',' + pileupread.alignment.seq + ', ' + str(pileupread.qpos) + ',indtrue' + str(pileupread.indel) + ',' + str(start) + ',' + pileupread.alignment.cigarstring	
 				
 				# pileupread.alignment.qlen is aligned length, does NOT include softclip
 				#NOTE should include softclip?
@@ -42,8 +42,8 @@ def getBamReads(chr, start, end, ref, alt, bam):
 							alt_count += 1
 					elif len(ref) > 1:
 						# deletion
-						#FIXME ref!=seq may not be exactly the same deleted base, close enough? 
-						if ref != seq and pileupread.indel < 0:
+						#FIXME take out ref !=seq because the adjacent bases maybe the same as deleted base, what different kinds of deleted bases at same site? can't disguish at the moment. 
+						if pileupread.indel < 0:
 							alt_count += 1
 				
 				# count read
