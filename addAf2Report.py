@@ -52,13 +52,13 @@ for line in file:
       
 				  # if indel, split AAF and choose 2nd count
           if re.search('-', refalt) and re.search(',', dat[3]):
-            af = dat[6].split(',')[1]
+            af = dat[-1].split(',')[1]
           # it's snv part of snv+indel, choose 1st count to be alt
           elif re.search(',', dat[3]):
-            af = dat[6].split(',')[0]      
+            af = dat[-1].split(',')[0]      
           else:
             # simple case - there's only 1 alt cont
-            af = dat[6]
+            af = dat[-1]
 
           # check if af is greater than > .05
           if round(float(af),2) >= 0.05:
