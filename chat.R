@@ -106,6 +106,7 @@ for (i in 1:length(samples$V2)) {
 
 
 #save segmentation data as .rdata
+print("save segmentation data")
 seg.data=paste0(sampleid,".Rdata")
 seg_sAGP.data=paste0(sampleid,"_sAGP.Rdata")
 agp.txt = paste0(sampleid, "_AGP.txt")
@@ -116,6 +117,7 @@ mode(dd.dat)='numeric'
 save(dd.dat, file=seg.data)
 
 #AGP inference
+print("AGP inference")
 para <- getPara()
 para$datafile <- seg.data 
 para$thr.penalty <- 300
@@ -130,25 +132,80 @@ para.s$savedata <- seg_sAGP.data
 getsAGP(para=para.s)
 
 #CCF
+print("get ccf")
 load(seg_sAGP.data)
 getCCF('vcf/',sAGPfile=seg_sAGP.data,nt=FALSE,output="Test.vcf",TCGA=FALSE,nc=10,tc=11,AD=2,filter=FALSE)
 
-#fit
+## @knitr plot1
+# fit clusters
+library(KernSmooth)
+library(Ckmeans.1d.dp)
+library(CHAT)
+
 # read vcf
+setwd("~/Analysis/fap/chat")
 vcf = read.table("Test.vcf", sep="\t")
+
+# read vtools report (downloaded from hap0)
+# TODO: make new one on hpc
+report = read.table("fap_mutect.report", header=T, sep="\t", quote="", na.strings="NA", fill=T)
+annot=report[,c("chr", "hg19_pos", "ref", "alt", "id", "region_type", "region_name")]
+
+# merge annotation and vcf
+vcf = merge(vcf, annot, by.x=c("V1","V2","V4","V5"), by.y=c("chr", "hg19_pos", "ref", "alt"))
+
+# extract ccf column
 info = strsplit(as.character(vcf[,8]), ";")
 dat = as.data.frame(matrix(unlist(strsplit(as.character(vcf[,8]), ";")), nrow=nrow(vcf), byrow=T))
 
+# gene list
+vogelstein = system("cat ~/Analysis/fap/crc_genes/vogelstein.txt", intern=T)
+
+# dpfit priors
 data(mcmc)
 data(prior)
-# each sample use dpfit
-result = NULL
+
+# 1 dimension k means cluster s
+#TODO determine cluster with local minima instead of visual inspection
+numClust = c(2,1,2,1,2,1,1,2,2,1,3,1,1,2,2,2,2)
 for (i in unique(dat[,1])) {
-  i = "Vilar14"
+  # index for cluster
+  index = 1 
+  #i = "Vilar14"
+  snv= vcf[which(dat$V1==i & dat$V6!="NA"),]
+  
   # sample and ccf not null
+  d=dat[which(dat$V1==i & dat$V6!="NA"),]
   ccf = as.numeric(as.character(dat[which(dat$V1==i & dat$V6!="NA"),]$V6))
+  
+  # genes label for plots
+  gene_name = as.character(snv[which(snv$region_type=="exonic"),]$region_name)
+  gene_y = ccf[which(snv$region_type=="exonic")]
+  gene_x = which(snv$region_type=="exonic")  
+    
   # count snv
-  print(paste0(i, "=", length(ccf)))
+  print(paste0(i, " number of SNVs = ", length(ccf)))
+  
+  # kernel density
+  #par(mfrow=c(2,1))
+  result <- bkde(x=ccf)
+  plot(result, xlab="Cancer Cell Fraction (CCF)", ylab="Density function", main=i)
+  
+  result1 = Ckmeans.1d.dp(ccf, numClust[index])
+  plot(ccf, col = result1$cluster, xlab= "SNV", ylab="Cancer Cell Fraction (CCF)", main = "SNV Clustering")
+  text(gene_x, gene_y, gene_name)
+  index = index + 1
+  
+ 
+  print(gene_name)
+  print("")
+  print("")
+  #TODO: doesn't always work when finding minimum...
+  #v=optimize(approxfun(result$x,result$y),interval=c(0,1))$minimum
+  #abline(v=v, col="blue")
+  
+  # dpfit
+  if (FALSE) {
   fit = getDPfit(ccf, alpha = 0.05, low.thr = 0.05,prior,mcmc)
   numClones = 0
   if (fit$model == 2) {
@@ -157,13 +214,14 @@ for (i in unique(dat[,1])) {
     numClones = 1
   }
   result = rbind(result, c(i, numClones))
+  }
 }
 write.table(result, "clones.txt", sep="\t", quote=FALSE, row.names=FALSE)
-?write.table
 
 
-### TEST
 
+##### TEST #####
+if (FALSE) {
 fit = kmeans(ccf, 5)
 library(cluster) 
 clusplot(ccf, fit$cluster, color=TRUE, shade=TRUE, 
@@ -426,4 +484,5 @@ for(k in 1:n){
     tmp.dd<-tmp.vcf[vv,]
     tmp.dd[,8]<-INFO
     MutInfo<-rbind(MutInfo,tmp.dd)
+}
 }
