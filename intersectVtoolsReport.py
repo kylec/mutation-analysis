@@ -65,26 +65,27 @@ def main():
 	union = pd.merge(df_a, df_b, on=['chr','hg19_pos','ref','alt','sample'], how='outer')
 	# keep file a and columns only
 	df_a_uniq = union[pd.notnull(union['info_x']) & pd.isnull(union['info_y'])].loc[:,'chr':'info_x']
-	df_a_uniq = addAfColumn2DataFrame(df_a_uniq, 'info_x', 'format_x', args.nameA)
+	# if there's stuff
+	if df_a_uniq.count()[0] > 0:
+		df_a_uniq = addAfColumn2DataFrame(df_a_uniq, 'info_x', 'format_x', args.nameA)
+		df_a_uniq.to_csv(args.nameA + '.txt', sep='\t', index=False)
 
 	print 'intersect...'
 	# a and b overlap
 	df_a_b = union[pd.notnull(union['info_x']) & pd.notnull(union['info_y'])]
 	df_a_b = pd.concat([df_a_b.loc[:,'chr':'info_x'], df_a_b.loc[:,['format_y','info_y']]], axis=1)
-	df_a_b = addAfColumn2DataFrame(df_a_b, 'info_x', 'format_x', args.nameA)
-	df_a_b = addAfColumn2DataFrame(df_a_b, 'info_y', 'format_y', args.nameB)
-
+	if df_a_b.count()[0] > 0:
+		df_a_b = addAfColumn2DataFrame(df_a_b, 'info_x', 'format_x', args.nameA)
+		df_a_b = addAfColumn2DataFrame(df_a_b, 'info_y', 'format_y', args.nameB)
+		df_a_b.to_csv('intersect.txt', sep='\t', index=False)
+	
 	print 'file B only...'
 	# union again, but list file b first, it's easier than picking out b columns from the first union
 	union = pd.merge(df_b, df_a, on=['chr','hg19_pos','ref','alt','sample'], how='outer')
 	df_b_uniq = union[pd.notnull(union['info_x']) & pd.isnull(union['info_y'])].loc[:,'chr':'info_x']
-	df_b_uniq = addAfColumn2DataFrame(df_b_uniq, 'info_x', 'format_x', args.nameB)
-
-	print 'write file...'
-	# write files
-	df_a_uniq.to_csv('fap_ampliseq.torrent-only.txt', sep='\t', index=False)
-	df_a_b.to_csv('fap_ampliseq.intersect.txt', sep='\t', index=False)
-	df_b_uniq.to_csv('fap_ampliseq.mutect-only.txt', sep='\t', index=False)
+	if df_b_uniq.count()[0] > 0:
+		df_b_uniq = addAfColumn2DataFrame(df_b_uniq, 'info_x', 'format_x', args.nameB)
+		df_b_uniq.to_csv(args.nameB + '.txt', sep='\t', index=False)
 
 if __name__ == '__main__':
 	main()
