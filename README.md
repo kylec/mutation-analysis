@@ -17,6 +17,15 @@ cut -f1,7 ../samples.txt  | while read sample bam; do echo $sample $bam; vcf=`ec
 
 ## Somatic mutation 
 ### Mutect
+### Varscan
+```shell
+#filter output by design
+BEDFILE=~/references/IAD59895_182_Designed.bed
+for VCF in *.snp.vcf; do
+  OUTFILE=`basename $VCF | sed 's/.vcf/.tgt.vcf/'`
+  bedtools intersect -a $VCF -b $BEDFILE > $OUTFILE
+done
+```
 ## Germline mutation
 ### GATK
 ## Copynumber
@@ -37,17 +46,36 @@ for a in ../bam/*.bam; do echo $a; sample=`basename $a | cut -d. -f1`;  bedtools
 
 ## RNAseq 
 ### Tuxedo Protocol
-
+```shell
+mkdir sourcedata sample_groups thout cqout clout cdout
+#count fasta
+a_path=/rsrch1/epi/scheet/PROJECTS/Vilar_Lynch/Project_EBF_LynchSyn_RNA48; b_path=.; for b in `ls $b_path`; do a_count=`ls $a_path/$b | wc -l`; b_count=`ls $b | wc -l`; echo -e "$b\t$a_count\t$b_count"; done
+```
 ## Ampliseq
 ```shell
-# mutations
+# torrent mutations
 cat ../pairs.txt | while read pat tum nrm; do echo $tum $nrm; bedtools intersect -a $tum.vcf -b $nrm.vcf -v -header > $tum.somatic.vcf; done
+for a in `ls *somatic.vcf` ; do echo $a;  sample=`echo $a | cut -d. -f1`; echo "python ~/mutation-analysis/adjustAf2vcf.py -i $a -b ../bam/$sample.bam > $sample.somatic.adjaf.vcf"; done
+# mutect mutations
+BAMDIR=../../../0012-merge-and-filter/output
+for PAT in `ls *.pass.vcf | cut -d. -f1`; do 
+  echo $PAT; 
+	python ~/mutation-analysis/adjustAf2vcf.py -i $PAT.mutect.pass.vcf -b $BAMDIR/$PAT.bam > $PAT.mutect.pass.adjaf.vcf
+done
+# mutect vtools
+for a in `ls ~/fap_ampliseq_syqada/mutect-downsample-200/0001-mutect/output/*.adjaf.vcf`; do echo $a; tum=`basename $a | cut -d. -f1`; nrm=`grep $a ../pairs2.txt | cut -f3`; echo vtools import --build hg19 --format control/mutect_fap_vcf.fmt $a --sample_name $tum $nrm; done
+less control/fap_torrent_report.header | vtools export variant --format control/fap_mutect_report.fmt --header - --output mutect.report --samples 'sample_name like "%-P"'
+
+#vtools
+cut -f1,2,3,5 ../samples.txt | while read sample id pat type; do vcf=`ls ../torrent_somatic_low_stringency/*.somatic.adjaf.vcf | grep $sample`; if [ "$vcf" != "" ]; then vtools import --build hg19 --format control/torrent_fap_vcf.fmt $vcf --sample_name $pat-$id-$type; fi; done
+less control/fap_torrent_report.header | vtools export variant --format control/fap_torrent_report.fmt --header - --output torrent.report --samples 'sample_name like "%EB%"'
+python ~/mutation-analysis/addAf2Report.py -i torrent.report   > torrent.report.coding
+awk -F"\t" '$71>0 || $1=="chr"' torrent.report.coding  > torrent.report.coding.afcutoff
+
 # replace sample name (not needed if you do vtools import by one sample, can be specified in vtools param)
 cut -f1,2 ../samples.txt | while read curr prev; do echo $curr $prev; awk -v var1=$curr -v var2=$prev '{FS=OFS="\t"; if($1 ~ /#CHROM/){gsub(var2, var1, $10)}; print $0}' $curr.vcf > tmp; mv tmp $curr.vcf; done
-#  import
+# import
 cut -f1,2,3,5 ../samples.txt | while read sample id pat type; do vcf=`ls ../torrent/*.somatic.vcf | grep $sample`; if [ "$vcf" != "" ]; then vtools import --build hg19 --format control/torrent_fap_vcf.fmt $vcf --sample_name $pat-$id-$type; fi; done
-# export vtools report
-less control/fap_torrent_report.header | vtools export variant --format control/fap_torrent_report.fmt --header - --output torrent.report --samples 'sample_name like "%polyp"'
 # export novel 1% report
 vtools select variant "(thousandGenomesEBI.EUR_AF_INFO is null or thousandGenomesEBI.EUR_AF_INFO < 0.01) and (evs.EuropeanAmericanMaf is null or 1.0*evs.EuropeanAmericanAltCount/(evs.EuropeanAmericanAltCount+evs.EuropeanAmericanRefCount) < 0.01)" -t variant_novel_01
 less control/fap_torrent_report.header | vtools export variant_novel_01 --format control/fap_torrent_report.fmt --header - --output torrent_novel_01.report --samples 'sample_name like "%polyp"'

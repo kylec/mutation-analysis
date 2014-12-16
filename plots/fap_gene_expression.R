@@ -21,22 +21,22 @@ plot_heatmap = function(path, heatmap_name) {
   # csVolcano(genes(t_vs_n_cuff_data),'colon_polyp','colon_normal', alpha=0.05, showSignificant=T)
   
   # http://seqanswers.com/forums/showthread.php?t=19278
-  # stringent
-  sigGeneIds <- getSig(t_vs_n_cuff_data, level="genes", alpha=0.005)
+  # stringent filter for sig de genes id
+  sigGeneIds <- getSig(t_vs_n_cuff_data, level="genes", alpha=0.05)
   
   # return gene object of a cuffset, then return diff gene dataframe - value1 and value2 are average FPKM in genes.read_group_tracking
   t_vs_n_diff_genes <- diffData(genes(t_vs_n_cuff_data),features=TRUE)
- 
+  # anthony filter for sig de genes id
   t_vs_n_diff_genes_sig_ids <- t_vs_n_diff_genes[t_vs_n_diff_genes$q_value <= 0.05 & abs(t_vs_n_diff_genes$log2_fold_change) >= 1,]$gene_id
-  # cuffgeneset
-  t_vs_n_de_genes <- getGenes(t_vs_n_cuff_data, t_vs_n_diff_genes_sig_ids)
-  #csHeatmap(t_vs_n_de_genes,cluster='both', replicates=T)
   
   # write de gene file by 1) getSig, 2) anthony's filter
   write.table(t_vs_n_diff_genes[ t_vs_n_diff_genes$gene_id %in% sigGeneIds, ], file="de_gene_getSig.tsv", quote=FALSE, row.names=FALSE, col.names=TRUE, sep="\t")
   write.table(t_vs_n_diff_genes[ t_vs_n_diff_genes$gene_id %in% t_vs_n_diff_genes_sig_ids, ], file="de_gene_anthony.tsv", quote=FALSE, row.names=FALSE, col.names=TRUE, sep="\t")
   
   # returns "internal_scaled_frags" in file genes.read_group_tracking - Estimated number of fragments originating from the object, after transforming to the internal common count scale (for comparison between replicates of this condition.)
+  # cuffgeneset using anthony's filter for de genes
+  t_vs_n_de_genes <- getGenes(t_vs_n_cuff_data, t_vs_n_diff_genes_sig_ids)
+  #csHeatmap(t_vs_n_de_genes,cluster='both', replicates=T)
   t_matrix <- repCountMatrix(t_vs_n_de_genes)
  
   # cluster fragments count
@@ -64,7 +64,7 @@ plot_heatmap = function(path, heatmap_name) {
   )
   dev.off()
   
-  # getSig genes clustering
+  # getSig genes clustering using stringent alpha cutoff
   t_vs_n_de_genes <- getGenes(t_vs_n_cuff_data, sigGeneIds)
   t_matrix <- repCountMatrix(t_vs_n_de_genes)
   # cluster fragments count
@@ -101,6 +101,11 @@ plot_heatmap(path, heatmap_name)
 ### duodenum polyp
 path="~/Analysis/fap/rnaseq/cdout/duodenum_polyp,duodenum_normal/"
 heatmap_name="duodenum_polyp_normal_heatmap"
+plot_heatmap(path, heatmap_name)
+
+### lynch
+path="~/Analysis/lynch/rnaseq-human/cdout/colon_polyp,colon_normal/"
+heatmap_name="colon_polyp_normal_heatmap"
 plot_heatmap(path, heatmap_name)
 
 ### polyp vs normal

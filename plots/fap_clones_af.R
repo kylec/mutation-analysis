@@ -1,6 +1,6 @@
 # read list of sample groupings
 #library(ggplot2)
-f = system("cat /Users/kyle_air/Dropbox/lab_vilar/fap/samples_group.txt", intern=T)
+f = system("cat ~/Dropbox/lab_vilar/fap/samples_group.txt", intern=T)
 
 for (i in 1:length(f)) {
   
@@ -18,7 +18,7 @@ for (i in 1:length(f)) {
   par(mfrow=c(1,length(samples)))
   for (i in 1:length(samples)) {
     file_name = strsplit(samples[i], "_")[[1]][1]
-    fin = paste(file_name,"ann.tsv",sep=".")
+    fin = paste(file_name,"sps.ann.tsv",sep=".")
     a = read.table(fin, sep="\t", header=T, stringsAsFactors=F)
     
     sp = sort(unique(a$SP[!is.na(a$SP)]))
