@@ -19,6 +19,9 @@ index = samples.index('format')
 samples = samples[index+1:]
 #print samples
 
+# allele fraction cutoff
+afcutoff = .02
+
 print header.rstrip('\n') + '\t' + "mutated_cases" + "\t" + "#_samples_>_af_cutoff"
 
 for line in file:
@@ -60,8 +63,8 @@ for line in file:
             # simple case - there's only 1 alt cont
             af = dat[-1]
 
-          # check if af is greater than > .05
-          if round(float(af),2) >= 0.05:
+          # check if af is greater than threshold
+          if round(float(af),2) >= afcutoff:
             sample_count += 1
 
           # simplify samples
