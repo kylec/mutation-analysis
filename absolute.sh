@@ -45,12 +45,16 @@ fi
 
 # VCF to MAF
 if [ "$?" == 0 ]; then
-    # remove chrX,Y,M, gl
-    echo "`date` Remove chrX,Y,M, gl and chr prefix"
-    awk '{FS=OFS="\t"; if ($1 ~ /#/ || $1 !~ /M|X|Y|GL|gl|hap/) { print $0}}' $VCF_EFF | sed 's/^chr//g' > $VCF_EFF.tmp && mv $VCF_EFF.tmp $VCF_EFF
-    echo "`date` Convert vcf to maf."
-    echo "perl $VCF2MAF_HOME/vcf2maf.pl --input-snpeff $VCF_EFF --output-maf $MAF --tumor-id $TSAM --normal-id $NSAM"
-    perl $VCF2MAF_HOME/vcf2maf.pl --input-snpeff $VCF_EFF --output-maf $MAF --tumor-id $TSAM --normal-id $NSAM
+    if [ -f "$MAF" ]; then		
+        # remove chrX,Y,M, gl
+        echo "`date` Remove chrX,Y,M, gl and chr prefix"
+        awk '{FS=OFS="\t"; if ($1 ~ /#/ || $1 !~ /M|X|Y|GL|gl|hap/) { print $0}}' $VCF_EFF | sed 's/^chr//g' > $VCF_EFF.tmp && mv $VCF_EFF.tmp $VCF_EFF
+        echo "`date` Convert vcf to maf."
+        echo "perl $VCF2MAF_HOME/vcf2maf.pl --input-snpeff $VCF_EFF --output-maf $MAF --tumor-id $TSAM --normal-id $NSAM"
+        perl $VCF2MAF_HOME/vcf2maf.pl --input-snpeff $VCF_EFF --output-maf $MAF --tumor-id $TSAM --normal-id $NSAM
+    else
+        echo "`date` $MAF present."
+    fi
 else
     echo "ERROR: snpeff error."; exit 1
 fi
