@@ -8,7 +8,7 @@ import pysam
 # def get bam reads
 def getBamReads(chr, start, end, ref, alt, bam):
 	# thresholds
-	fraction_base = 0.1
+	fraction_base = 0.15
 	alt_count = 0
 	read_count = 0
 	af = 0.0
