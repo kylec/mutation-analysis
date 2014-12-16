@@ -16,7 +16,7 @@ sigma.p <- 0
 max.sigma.h <- 0.02
 min.ploidy <- 0.95
 max.ploidy <- 10
-max.as.seg.count <- 1500
+max.as.seg.count <- 16000
 max.non.clonal <- 0
 max.neg.genome <- 0
 copy_num_type <- "total"
