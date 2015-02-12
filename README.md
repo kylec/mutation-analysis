@@ -17,6 +17,14 @@ cut -f1,7 ../samples.txt  | while read sample bam; do echo $sample $bam; vcf=`ec
 
 ## Somatic mutation 
 ### Mutect
+```shell
+# filter for exome mutect vcf
+for a in `ls *.pass.vcf | sed 's/.vcf//'`; do echo $a; intersectBed -a $a.vcf -b ~/references/SeqCap_EZ_Exome_v3_primary.bed -header > $a.exome.vcf; done
+# keep mutations
+for a in *.mutect; do echo $a;  grep -P "contig|KEEP" $a > $a.keep; done
+# keep mutation exome (need exome vcf)
+for SAMPLE in `ls *.mutect.pass.exome.vcf | cut -d. -f1`; do echo $SAMPLE; VCF=$SAMPLE.mutect.pass.exome.vcf; FIN=$SAMPLE.mutect.keep; FOUT=$FIN.exome;  head -1 $FIN > $FOUT; grep -f<(grep PASS $VCF | cut -f1,2) $FIN >> $FOUT; done
+```
 ### Varscan
 ```shell
 # standard run in varscan dir
@@ -58,6 +66,34 @@ cat ../pairs.txt | while read pat tum nrm; do q "sh ~/mutation-analysis/absolute
 grep -f samples.txt ../pairs.txt  | while read pat tum nrm ; do echo $pat $tum $nrm; q "sh ~/mutation-analysis/absolute.sh $tum $tum $nrm tcga_coadread ucsc /scratch/bcb/kchang3/Vilar_FAP" $tum $tum.log 1 2 1:00:00 short; done
 ```
 ### Expands
+```shell
+# make snv in put for (TCGA)
+cut_cmd="cut -d- -f1-3"
+# make snv in put for (FAP)
+cut_cmd="cut -d- -f1"
+for a in *.keep ; do
+    echo $a
+    PAT=`echo $a | $cut_cmd`
+    OUTFILE=$PAT.combined
+    OUTFILE1=$PAT.combined.exome
+    echo -e "chr\tstartpos\tAF_Tumor\tPN_B" > $OUTFILE
+    sed '1d' $a | awk '{FS=OFS="\t"; print $1, $2, $22/($22+$21), 0}' | egrep -i -v "hap|gl|X|Y|M" | sed 's/chr//g' >> $OUTFILE
+done
+for a in *.keep.exome; do 
+    PAT=`echo $a | $cut_cmd`
+    OUTFILE=$PAT.combined.exome
+    echo -e "chr\tstartpos\tAF_Tumor\tPN_B" > $OUTFILE
+    sed '1d' $a | awk '{FS=OFS="\t"; print $1, $2, $22/($22+$21), 0}' | egrep -i -v "hap|gl|X|Y|M" | sed 's/chr//g' >> $OUTFILE
+done
+
+# run expands
+for a in *.dnacopy; do
+    sample=`echo $a | cut -d. -f1`
+    if [ -f "$sample.combined" ]; then
+        q "Rscript ~/mutation-analysis/expands.R $sample > $sample.log" $sample $sample.log 1 10 24:00:00 medium
+    fi
+done
+```
 ## Coverage
 ### Bedtools
 ```shell
@@ -70,6 +106,21 @@ for a in ../bam/*.bam; do echo $a; sample=`basename $a | cut -d. -f1`;  bedtools
 mkdir sourcedata sample_groups thout cqout clout cdout
 #count fasta
 a_path=/rsrch1/epi/scheet/PROJECTS/Vilar_Lynch/Project_EBF_LynchSyn_RNA48; b_path=.; for b in `ls $b_path`; do a_count=`ls $a_path/$b | wc -l`; b_count=`ls $b | wc -l`; echo -e "$b\t$a_count\t$b_count"; done
+
+# create sample groupings
+cd sample_groups
+dir=/scratch/bcb/kchang3/fap/rnaseq-human
+outputfile="bam"; outputdir=thout; filetype=accepted_hits.bam
+outputfile="cxb"; outputdir=cqout; filetype=abundances.cxb
+
+for a in `grep DUODENUM samples.txt  | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > duodenum.$outputfile.txt
+for a in `grep COLON samples.txt  | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > colon.$outputfile.txt
+for a in `grep COLON samples.txt | grep POLYP | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > colon_polyp.$outputfile.txt
+for a in `grep COLON samples.txt | grep NORMAL | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > colon_normal.$outputfile.txt
+for a in `grep DUODENUM samples.txt | grep POLYP | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > duodenum_polyp.$outputfile.txt
+for a in `grep DUODENUM samples.txt | grep NORMAL | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > duodenum_normal.$outputfile.txt
+for a in `grep POLYP samples.txt | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > polyp.$outputfile.txt
+for a in `grep NORMAL samples.txt | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > normal.$outputfile.txt
 ```
 ## Ampliseq
 ```shell
