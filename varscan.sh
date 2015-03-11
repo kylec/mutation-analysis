@@ -5,8 +5,8 @@
 # Output: .copynumber, .copynumber.called, .copynumber.dnacopy, .copynumber.called.dnacopy
 #
 # usage
-#       sh varscan.sh [patient id] [tumor id] [normal id] [project_name] [build] [analysis_dir]
-#       sh varscan.sh Vilar02 Vilar02 Vilar01 fap ucsc $HOME 
+#       sh varscan.sh [patient id] [tumor id] [normal id] [project_name] [build] [analysis_dir] [output dir]
+#       sh varscan.sh Vilar02 Vilar02 Vilar01 fap ucsc $HOME varscan
 #
 # kyle chang
 
@@ -16,9 +16,10 @@ NSAM=$3
 PROJ=$4
 BUILD=$5
 ANALYSISDIR=$6
+OUTDIR=$7
 
-BAMDIR=$ANALYSISDIR/$PROJ/bam/*.bam
-OUTPUTDIR=$ANALYSISDIR/$PROJ/varscan
+BAMDIR=$ANALYSISDIR/$PROJ/bam-tgt/*.bam
+OUTPUTDIR=$ANALYSISDIR/$PROJ/$OUTDIR
 
 if [ "$BUILD" == "ucsc" ]; then
     REF=$ANALYSISDIR/references/ucsc.hg19.fasta
@@ -32,6 +33,14 @@ fi
 TBAM=`ls $BAMDIR | grep $TSAM`;
 NBAM=`ls $BAMDIR | grep $NSAM`;
 OUTPUTNAME=$OUTPUTDIR/$PAT-$TSAM-$NSAM
+
+# count reads
+TCOUNT=`samtools view -c -F 0x0404 $TBAM`
+NCOUNT=`samtools view -c -F 0x0404 $NBAM`
+# get counts ratio
+COUNT_RATIO=`perl -e "print $NCOUNT/$TCOUNT"`
+echo `date` Normal read count=$NCOUNT, tumor read count=$TCOUNT, ratio=$COUNT_RATIO
+
 if [ -f "$OUTPUTNAME.copynumber" ]; then
     echo "$OUTPUTNAME.copynumber exists."
 else
@@ -49,15 +58,18 @@ else
 
     if [ "$?" == 0 ]; then
         echo `date` varscan copynumber.
-        java -jar ~/bin/VarScan.jar copynumber $OUTPUTNAME.pileup $OUTPUTNAME --mpileup 1
-        #java -jar ~/bin/VarScan.jar copynumber $OUTPUTNAME.pileup $OUTPUTNAME --mpileup 1
+        CMD="java -jar $HOME/bin/VarScan.jar copynumber $OUTPUTNAME.pileup $OUTPUTNAME --p-value 0.01 --data-ratio $COUNT_RATIO --mpileup 1"
+        echo $CMD
+        $CMD   
     else
         echo `date` pileup failed.
     fi
 
     if [ "$?" == 0 ]; then
         echo `date` varscan copycaller.
-        java -jar ~/bin/VarScan.jar copyCaller $OUTPUTNAME.copynumber --output-file $OUTPUTNAME.copynumber.called --output-homdel-file $OUTPUTNAME.copynumber.called.homdel
+        CMD="java -jar $HOME/bin/VarScan.jar copyCaller $OUTPUTNAME.copynumber --output-file $OUTPUTNAME.copynumber.called --output-homdel-file $OUTPUTNAME.copynumber.called.homdel"
+        echo $CMD
+        $CMD
     else
         echo `date` copynumber failed.
     fi
@@ -66,8 +78,13 @@ else
     if [ "$?" != 0 ]; then
         echo `date` copycaller failed; exit 1
     else 
-        Rscript $SCRIPTSDIR/dnacopy.R $OUTPUTNAME.copynumber $OUTPUTNAME.copynumber.dnacopy
-        Rscript $SCRIPTSDIR/dnacopy.R $OUTPUTNAME.copynumber.called $OUTPUTNAME.copynumber.called.dnacopy
+        echo `date` dnacopy.
+        CMD="Rscript $SCRIPTSDIR/dnacopy.R $OUTPUTNAME.copynumber $OUTPUTNAME.copynumber.dnacopy $OUTPUTNAME.copynumber.dnacopy_p"
+        echo $CMD
+        $CMD
+        CMD="Rscript $SCRIPTSDIR/dnacopy.R $OUTPUTNAME.copynumber.called $OUTPUTNAME.copynumber.called.dnacopy $OUTPUTNAME.copynumber.called.dnacopy_p"
+        echo $CMD
+        $CMD
     fi 
 
     if [ "$?" != 0 ]; then
