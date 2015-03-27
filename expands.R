@@ -5,8 +5,10 @@ args <- commandArgs(TRUE)
 # inputs
 basename = args[1]
 #basename = "Vilar05"
-snvFile = paste(basename, "combined", sep=".")
-cnFile = paste(basename, "copynumber.dnacopy", sep=".")
+#snvFile = paste(basename, "combined", sep=".")
+#cnFile = paste(basename, "copynumber.dnacopy", sep=".")
+snvFile = args[2]
+cnFile = args[3]
 
 # read snv file
 cat("reading snv.")
