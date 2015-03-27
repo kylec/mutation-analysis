@@ -18,7 +18,7 @@ BUILD=$5
 ANALYSISDIR=$6
 OUTDIR=$7
 
-BAMDIR=$ANALYSISDIR/$PROJ/bam-tgt/*.bam
+BAMDIR=$ANALYSISDIR/$PROJ/bam/*.bam
 OUTPUTDIR=$ANALYSISDIR/$PROJ/$OUTDIR
 
 if [ "$BUILD" == "ucsc" ]; then
@@ -67,6 +67,7 @@ else
 
     if [ "$?" == 0 ]; then
         echo `date` varscan copycaller.
+        rm $OUTPUTNAME.pileup
         CMD="java -jar $HOME/bin/VarScan.jar copyCaller $OUTPUTNAME.copynumber --output-file $OUTPUTNAME.copynumber.called --output-homdel-file $OUTPUTNAME.copynumber.called.homdel"
         echo $CMD
         $CMD
