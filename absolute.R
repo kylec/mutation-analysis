@@ -15,12 +15,12 @@ maf.fn = args[4]
 sigma.p <- 0
 max.sigma.h <- 0.02
 min.ploidy <- 0.95
-max.ploidy <- 10
+max.ploidy <- 6
 max.as.seg.count <- 16000
 max.non.clonal <- 0
 max.neg.genome <- 0
 copy_num_type <- "total"
-min.mut.af=0.1 
+min.mut.af=0.1
 
 ## create absolute output folder for a patient
 results.dir=file.path(args[1], args[2], args[3], sample.name)
@@ -33,7 +33,8 @@ absolute.files <- file.path(results.dir, paste0(sample.name,".ABSOLUTE.RData"))
 calls.path = file.path(review.dir, paste0(sample.name, ".PP-calls_tab.txt"))
 modes.path = file.path(review.dir, paste0(sample.name, ".PP-modes.data.RData"))
 output.path = file.path(review.dir)
-
+print("Start absolute...")
+print(length(args))
 # create when it's non-review mode
 if (length(args)==7) {
   print("Run absolute in non-review mode")
