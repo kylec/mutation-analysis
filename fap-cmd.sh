@@ -90,63 +90,14 @@ for a in `ls ../*combined`; do file=`echo $a | cut -d"/" -f2`;  grep -v -f exclu
 for a in `ls FAP*`; do b=`echo $a | cut -d- -f2`; c=`echo $a | cut -d- -f2-`; mv $a $b-$c; done
 
 
-###### varscan ######
-for a in *dnacopy; do
-    #chr_count=`grep chr $a | wc -l`
-    #if [ "$chr_count" -gt "0" ]; then
-        echo $a
-        egrep -i -v "M|X|Y|gl|hap" $a | sed 's/chr//g' > tmp && mv tmp $a
-    #fi
-done
-
-# when linking gc corrected copynumber
-for a in *dnacopy; do b=`echo $a | sed 's/called.//g'`; echo $a $b; done
-
-###### absolute ######
-for a in `ls *pass.vcf | cut -d. -f1-3`; do 
-    java -Xmx2g -jar ~/resources/snpEff/snpEff.jar -noStats -sequenceOntology -hgvs hg19 $a.vcf > $a.snpeff.vcf &
-done
-
-for a in `ls *pass.snpeff.vcf | cut -d. -f1`; do 
-    tumor=`echo $a | cut -d- -f4-10`; normal=`echo $a | cut -d- -f11-17`; 
-    perl ~/vcf2maf-master/vcf2maf.pl --input-snpeff $a.mutect.pass.snpeff.vcf --output-maf $a.maf --tumor-id $tumor --normal-id $normal
-done
-
 ###### mutect ######
 # fix fap sample name in vcf
 for a in *.pass.vcf; do awk '{FS=OFS="\t"; if ($1 ~ /#CHROM/) { gsub("Sample","",$0); gsub("_","",$0);}; print $0}' $a > tmp; mv tmp $a; done
 
-
-# filter mutect.keep by exome
-capture_file="/usr/local/epi/home/kchang3/references/SeqCap_EZ_Exome_v3_primary.bed"
-for a in `ls *.mutect.keep`; do
-  echo $a; out=$a.exome;
-  sed '1d' $a | awk '{FS=OFS="\t"; print $1, $2-1, $2, $0}' | cut -f1-3,6- > tmp
-  head -n1 $a > $out
-  intersectBed -a tmp -b $capture_file -wa | cut -f1,3- >> $out
-  rm tmp
-done
 # count mutect chr
 for a in `ls *.mutect | head -n20`; do 
     count=`cut -f1 $a | egrep -i -v "hap|gl|X|Y|M|un" | sort -u | wc -l`
     echo $a $count
-done
-
-###### expands ######
-# make snv in put for (TCGA)
-cut_cmd="cut -d- -f1-3"
-# make snv in put for (FAP)
-cut_cmd="cut -d- -f1"
-for a in *.keep ; do
-    echo $a
-    PAT=`echo $a | $cut_cmd`
-    OUTFILE=$PAT.combined
-    if [ -f "$OUTFILE" ]; then
-        echo $OUTFILE exists.
-    else 
-        echo -e "chr\tstartpos\tAF_Tumor\tPN_B" > $OUTFILE
-        sed '1d' $a | awk '{FS=OFS="\t"; print $1, $2, $22/($22+$21), 0}' | egrep -i -v "hap|gl|X|Y|M" | sed 's/chr//g' >> $OUTFILE
-    fi
 done
 
 # link inputs (TCGA)
@@ -154,32 +105,6 @@ mkdir expands; cd expands
 ln -s ../mutect/*combined .
 for a in ../../varscan/*copynumber.dnacopy; do name=`basename $a | $cut_cmd`; echo $a $name.copynumber.dnacopy; done
 
-# run expands
-for a in *.dnacopy; do 
-    sample=`echo $a | cut -d. -f1`
-    if [ -f "$sample.combined" ]; then
-        q "Rscript ~/mutation-analysis/expands.R $sample > $sample.log" $sample $sample.log 1 10
-    fi
-done
-
-
-#### RNA seq ####
-
-# create sample groupings
-cd sample_groups
-dir=/RIS/home/scheet/projects/Vilar_FAP/working/test/rna_seq 
-dir=/RIS/home/scheet/projects/Vilar_FAP/rnaseq-human/
-outputfile="bam"; outputdir=thout; filetype=accepted_hits.bam
-outputfile="cxb"; outputdir=cqout; filetype=abundances.cxb
-
-for a in `grep DUODENUM samples.txt  | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > duodenum.$outputfile.txt
-for a in `grep COLON samples.txt  | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > colon.$outputfile.txt
-for a in `grep COLON samples.txt | grep POLYP | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > colon_polyp.$outputfile.txt
-for a in `grep COLON samples.txt | grep NORMAL | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > colon_normal.$outputfile.txt
-for a in `grep DUODENUM samples.txt | grep POLYP | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > duodenum_polyp.$outputfile.txt
-for a in `grep DUODENUM samples.txt | grep NORMAL | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > duodenum_normal.$outputfile.txt
-for a in `grep POLYP samples.txt | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > polyp.$outputfile.txt
-for a in `grep NORMAL samples.txt | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > normal.$outputfile.txt
 
 #### CHAT ####
 # check for gatk error
