@@ -12,12 +12,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-i', dest='input')
 args = parser.parse_args()
 
+# open file and get column index of fields
 file = open(args.input, 'r')
 header = file.readline()
 samples = header.rstrip('\n').split('\t')
 index = samples.index('format')
+refIndex = samples.index('ref')
+altIndex = samples.index('alt')
 samples = samples[index+1:]
-#print samples
 
 # allele fraction cutoff
 afcutoff = .02
@@ -30,12 +32,14 @@ for line in file:
   # skip non-exonic and synonymous
   #if (fields[6] == 'exonic' and fields[8] != 'synonymous SNV') or fields[6] == 'splicing':
   if (1==1):
-	  # empty string for mutated cases
+    # empty string for mutated cases
     mutCase = ''
     # flag for reaching genotype column
     found = 0
+
     # ref,alt alleles
-    refalt = fields[4] + fields[5]
+    refalt = fields[refIndex] + fields[altIndex]
+
     # index for matching sample name array and genotype info
     index = 0 
     # count for sample with allele fraction > .05
