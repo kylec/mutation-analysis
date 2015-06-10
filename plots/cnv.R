@@ -26,7 +26,7 @@ read_data = function(files) {
   for (file in files) {
     # merge paddings and color to seg file
     name = file
-    a = read.table(file, sep="\t")
+    a = read.table(file, sep="\t", header=T)
     colnames(a) = c('chr', 'start','end','seglen','lrr')
     # remove chr
     a$chr = as.numeric(gsub("chr","", a$chr))
@@ -64,4 +64,18 @@ files=list.files(path=".", pattern="called.dnacopy$")
 mean_lrr_adj = read_data(files)
 
 cnv_summary = data.frame(sample=substr(files, 1, 7), mean_lrr=mean_lrr, mean_lrr_adj=mean_lrr_adj)
+
+setwd("/Users/kchang3/Analysis/tcga_coadread/varscan")
+files=list.files(path=".", pattern="called.dnacopy$")
+mean_lrr_adj = read_data(files)
+
+setwd("/Users/kchang3/Analysis/tcga_coadread/varscan-adj-tgt")
+files=list.files(path=".", pattern="called.dnacopy$")
+mean_lrr_adj = read_data(files)
+
+setwd("/Users/kchang3/Analysis/tcga_coadread/cnv")
+files=list.files(path=".", pattern=".seg$")
+mean_lrr_adj = read_data(files)
+
+
 
