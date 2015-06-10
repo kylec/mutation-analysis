@@ -30,14 +30,22 @@ with open (sys.argv[1], 'r') as csvfile:
 	header = reader.fieldnames
 	header = ["tier"] + header
 	outfile = open (sys.argv[3], 'w')
-	writer = csv.DictWriter(outfile, delimiter='\t', fieldnames=header)
+	writer = csv.DictWriter(outfile, delimiter='\t', fieldnames=header, lineterminator="\n")
 	writer.writeheader()
 
 	for row in reader:
 		tiers = 0
 		
 		# strip white space for mutations without pvalue
-		chasm_pval = float(row['chasm_emprical_pval']) if row['chasm_emprical_pval'].strip() else 1.0
+		#chasm_pval = float(row['chasm_emprical_pval']) if row['chasm_emprical_pval'].strip() else 1.0
+		if 'chasm_emprical_pval' in row:
+			if row['chasm_emprical_pval'].strip() and row['chasm_emprical_pval'] != '.':
+				chasm_pval = float(row['chasm_emprical_pval'])
+			else:
+				chasm_pval = 1.0
+		else:
+			chasm_pval = 1.0
+
 		cosmic_count = int(row['CosmicCodingMuts.CNT']) if row['CosmicCodingMuts.CNT'] != '.' else 0
 		
 		# prediction class
@@ -54,12 +62,12 @@ with open (sys.argv[1], 'r') as csvfile:
 		#damage_count = lrtPred + siftPred  + mutationTasterPred
 		#damage_count = lrtPred + mutationTasterPred (actual run, not CNOT3 paper description)
 
-		# Tier 1: indel OR stopgain/loss OR splicing OR missense(chasm < 0.05)
+		# Tier 1: frameshift indel OR stopgain/loss OR splicing OR missense(chasm < 0.05)
 		# Tier 2: >=2 damage_count AND cosmic_count > 1 AND CRC gene list
 		# Tier 3: >=2 damage_count
 		# Tier 4: 1 damage_count 
 		# Tier 5: else
-		if re.search('stop|frameshift', row['mut_type']) or row['region_type'] == 'splicing' or (row['mut_type'] == 'nonsynonymous SNV' and chasm_pval < .05): 
+		if re.search('stop|^frameshift', row['mut_type']) or row['region_type'] == 'splicing' or (row['mut_type'] == 'nonsynonymous SNV' and chasm_pval < .05): 
 			tiers = 1
 		elif damage_count > 1 and (row['genename'] in gene_list or cosmic_count > 1):
 			tiers = 2
