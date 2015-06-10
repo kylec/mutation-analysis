@@ -18,18 +18,26 @@ cut -f1,7 ../samples.txt  | while read sample bam; do echo $sample $bam; vcf=`ec
 ## Somatic mutation 
 ### Mutect
 ```shell
+# submit mutect
+cat ../pairs.txt | while read pat tum nrm; do q "sh ~/mutation-analysis/mutect.sh $pat $tum $nrm tcga_coadread 1g $HOME" $pat $pat.log 1 16 168:00:00 long; done
 # filter for exome mutect vcf
 for a in `ls *.pass.vcf | sed 's/.vcf//'`; do echo $a; intersectBed -a $a.vcf -b ~/references/SeqCap_EZ_Exome_v3_primary.bed -header > $a.exome.vcf; done
 # keep mutations
 for a in *.mutect; do echo $a;  grep -P "contig|KEEP" $a > $a.keep; done
 # keep mutation exome (need exome vcf)
 for SAMPLE in `ls *.mutect.pass.exome.vcf | cut -d. -f1`; do echo $SAMPLE; VCF=$SAMPLE.mutect.pass.exome.vcf; FIN=$SAMPLE.mutect.keep; FOUT=$FIN.exome;  head -1 $FIN > $FOUT; grep -f<(grep PASS $VCF | cut -f1,2) $FIN >> $FOUT; done
+# import vtools
+cat ../pairs.txt| while read pat tum nrm; do vcf=`ls T*.vcf | grep $tum`; echo vtools import --build hg19 --format control/mutect_fap_vcf.fmt $vcf --sample_name $tum $nrm; done
+less control/fap_mutect_report.header | vtools export variant --format control/fap_mutect_report.fmt --header - --output mutect.report --samples 'sample_name like "%"'
+# TCGA
+less control/fap_mutect_report.header | vtools export variant --format control/fap_mutect_report.fmt --header - --output mutect.report --samples 'sample_name like "TCGA-%-%-01%-%-%-%"'
+
 ```
 ### Varscan
 ```shell
 # standard run in varscan dir
 cat ../pairs.txt | while read pat tum nrm; do  
-  q "sh varscan.sh $pat $tum $nrm fap ucsc $HOME" $pat $pat.log 1 16 168:00:00 long
+  q "sh varscan.sh $pat $tum $nrm fap ucsc $HOME varscan" $pat $pat.log 1 16 168:00:00 long
 done
 
 #filter output by design
