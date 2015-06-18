@@ -49,6 +49,15 @@ input.write('-L ' + conditions + ' ')
 input.write(','.join(condition1Bams) + ' ')
 input.write(','.join(condition2Bams) + '\n')
 
+print('cuffdiff ')
+print('-u ' + mergedTranscripts + ' ')
+print('-b ' + indexBaseDirectory + '/Sequence/Chromosomes ')
+print('-p ' + procs + ' ')
+print('-o ' + outPrefix + ' ')
+print('-L ' + conditions + ' ')
+print(','.join(condition1Bams) + ' ')
+print(','.join(condition2Bams) + '\n')
+
 #finish script
 input.close()
 
