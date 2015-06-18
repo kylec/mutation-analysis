@@ -1,53 +1,14 @@
 #!/usr/bin/python
 import sys
-import glob
-import time
-from popen2 import popen2
-from sets import Set
-import os
+from  subprocess import call
 
-inputFastqFilePattern = sys.argv[1]
+inputFileName = sys.argv[1]
 runDirectory = sys.argv[2]
-queue = sys.argv[3]
-nodes = sys.argv[4]
-procs = sys.argv[5]
-walltime = sys.argv[6]
+procs = sys.argv[3]
 
-sampleNames = set()
-# gets list of files based on the pattern passed at command line.
-dirList = glob.glob(inputFastqFilePattern)
-for fname in dirList:
-	# get name for output file
-        filename = fname.split('/')[len(fname.split('/')) - 1]
-	sampleName = fname.split('/')[len(fname.split('/')) - 2]
-	outputDirectory = sampleName
-	if os.path.exists(runDirectory + '/' + outputDirectory):
-		print outputDirectory + 'exists.'
-		continue
-	print('Processing ' + sampleName)
 
-	# assemble cluster job
-	output, input = popen2('qsub')
-	input.write('#PBS -S /bin/bash\n')
-	input.write('#PBS -N ' + sampleName + '\n')
-	input.write('#PBS -d ' + runDirectory +'\n')
-	input.write('#PBS -e ' + runDirectory + ' -o ' + runDirectory + '\n')
-	input.write('#PBS -q ' + queue + '\n')
-	input.write('#PBS -l nodes=' + nodes + ':ppn=' + procs + ',walltime=' + walltime + '\n')
+print('Processing ' + inputFileName)
 
-	# commands for cluster job
-	input.write('cufflinks -p ' + procs + ' ')
-	input.write('-o ' + outputDirectory + ' ')
-	input.write(fname + '\n')
-
-	#finish script
-	input.close()
-	time.sleep(2)
-	
-	#print('tophat -p ' + procs + ' ')
-	#print('--fusion-search ')
-	#print('-G ' + indexBaseDirectory + '/Annotation/Genes/genes.gtf ')
-	#print('-o ' + outputDirectory + ' ')
-	#print(indexBaseDirectory + '/Sequence/Bowtie2Index/genome ')
-	#print(','.join(fastqFilesR1) + '\n' + ','.join(fastqFilesR2))
-
+cmd = 'cufflinks -p ' + procs + ' -o ' + runDirectory + ' ' + inputFileName
+print cmd
+call(cmd, shell=True)
