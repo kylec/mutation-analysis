@@ -130,6 +130,18 @@ for a in `grep DUODENUM samples.txt | grep NORMAL | cut -f2`; do ls $dir/$output
 for a in `grep POLYP samples.txt | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > polyp.$outputfile.txt
 for a in `grep NORMAL samples.txt | cut -f2`; do ls $dir/$outputdir/tophat*$a/$filetype; done > normal.$outputfile.txt
 ```
+### RSEM + BOWTIE
+``` shell
+#PREFIX="Sample_H_G"
+PREFIX="Sample_EBL"
+for i in `ls ../source_data/  |grep -v ".sh" | sed 's/$PREFIX//g' | sort -n`; do echo $i; ehco "python ~/mutation-analysis/rnaseq/submitRsemExpression.py \"../source_data/$PREFIX$i/*.fastq\" $PREFIX$i \"$HOME/references/rsem_resources/hg19\" 16" rsem-$i rsem-$i.log 16 64 ; done
+```
+### HTSEQ COUNT
+``` shell
+PREFIX="Sample_H_G1"
+sh ~/mutation_analysis/rnaseq/htseq-count.sh $PREFIX
+```
+
 ## Ampliseq
 ```shell
 # torrent mutations
