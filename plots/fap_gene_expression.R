@@ -1,3 +1,5 @@
+#source("https://bioconductor.org/biocLite.R")
+#biocLite("cummeRbund")
 library(cummeRbund)
 #library(graphics)
 library(amap)
@@ -94,12 +96,12 @@ plot_heatmap = function(path, heatmap_name) {
 }
 
 ### colon_polyp
-path="~/Analysis/fap/rnaseq/cdout/colon_polyp,colon_normal/"
+path="~/Analysis/fap/rnaseq-human/cdout/colon_polyp_normal/"
 heatmap_name="colon_polyp_normal_heatmap"
 plot_heatmap(path, heatmap_name)
 
 ### duodenum polyp
-path="~/Analysis/fap/rnaseq/cdout/duodenum_polyp,duodenum_normal/"
+path="~/Analysis/fap/rnaseq-human/cdout/duodenum_polyp_normal/"
 heatmap_name="duodenum_polyp_normal_heatmap"
 plot_heatmap(path, heatmap_name)
 

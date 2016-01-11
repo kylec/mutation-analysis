@@ -1,11 +1,13 @@
 import sys
 from collections import defaultdict
 
-#
+# usage: add gene alias to refGene.bed
+# example: python add_ref_genes_alias.py [output_file]
+
 ref_gene='/Users/kchang3/Analysis/references/refGene.bed'
 gene_info='/Users/kchang3/Analysis/references/gene_info'
-#ref_gene='/Users/kchang3/Analysis/references/testrefGene.bed'
-#gene_info='/Users/kchang3/Analysis/references/testgene_info'
+#ref_gene='/Users/kchang3/Analysis/references/test/testrefGene.bed'
+#gene_info='/Users/kchang3/Analysis/references/test/testgene_info'
 
 print "loading genes"
 genes = defaultdict(set)
@@ -23,12 +25,16 @@ with open (gene_info, 'r') as inputfile:
 				genes[cols[2]].add(alias)
 
 print "print genes"
+#print genes
 
 with open (ref_gene, 'r') as inputfile, open(sys.argv[1], 'w') as outputfile:
     for line in inputfile:
-		cols=line.rstrip().split('\t')
-		alias = 'na'
-		if cols[3] in genes:
-			alias = '|'.join(genes[cols[3]]) 
-		
-		outputfile.write(line.rstrip() + '\t' + alias + '\n')
+        cols=line.rstrip().split('\t')
+
+        # if gene has alias
+        if len(genes[cols[3]]) > 0:
+            alias = '|'.join(genes[cols[3]]) 
+        else:
+            alias = '-'
+
+        outputfile.write(line.rstrip() + '\t' + alias + '\n')

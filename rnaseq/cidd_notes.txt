@@ -1,0 +1,31 @@
+# run it in cdout dir
+
+# usage: sh gene_exp_cidd.sh [0=polyp/normal, 1=normal/polyp]
+
+# use q value < 0.05 log2 fold change > 1 or less than 1
+#NOTE:CHECK WHETHER NORMAL OR TUMOR FOLD CHANGE IS FLIPPED
+#NOTE:there may be gene1,gene2 in cuff diff output
+# only used genes tested properly (column 7 == OK)
+# remove locus without gene name
+# split delimited genes into new lines
+# log2(normal/tumor) < -1 = up-regulated genes in tumor/normal
+# log2(normal/tumor) > 1 = down-regulated genes in tumor/normal
+PROJ=gene_exp
+GENE_EXP=gene_exp.diff
+REV=${1-0}
+
+# polyp/normal signature
+if [ "$REV" == "0" ]; then
+	echo "`date` Run polyp/normal signature"
+	awk -F"\t" '$7 =="OK" && $10 <= -1 && $13 < 0.05' $GENE_EXP | cut -f3 | tr , '\n' | awk '$1 != "-"' > up.txt
+	awk -F"\t" '$7 =="OK" && $10 >= 1 && $13 < 0.05' $GENE_EXP | cut -f3 | tr , '\n' | awk '$1 != "-"' > down.txt
+else	
+	echo "`date` Run normal/polyp signature"
+	# normal/polyp ( which is the logratio specified in cuffdiff output
+	awk -F"\t" '$7 =="OK" && $10 <= -1 && $13 < 0.05' $GENE_EXP | cut -f3 | tr , '\n' | awk '$1 != "-"' > down.txt
+    awk -F"\t" '$7 =="OK" && $10 >= 1 && $13 < 0.05' $GENE_EXP | cut -f3 | tr , '\n' | awk '$1 != "-"' > up.txt
+fi
+
+echo "`date` Run cidd"
+cidd setup $PROJ
+cidd drugs --up up.txt --down down.txt --name $PROJ --data_store $DATA_STORE -v2

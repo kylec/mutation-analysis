@@ -2,7 +2,7 @@ import csv
 import sys
 import re
 
-# usage: python assign_tiers [input.txt] [crc_gene.txt] [output.txt]
+# usage: python assign_tiers [input.txt] [crc_gene.txt] [output.txt] [fdr|p]
 
 #(1) Driver mutation: frameshift insertions and deletions, stop gains, stop loss mutations and mutations located in splice sites that were classified as a driver mutation by CHASM (based on an empirical p-value <= 0.05 from CHASM) and seen in multiple (2 or more) other tumors in the COSMIC database; 
 #(2) Damaging recurrent mutations: predicted to be damaging by 2 or more algorithms and  seen in multiple (2 or more) other tumors in the COSMIC database( cosmicmutant count > 1) or in genes list  
@@ -24,6 +24,11 @@ with open (sys.argv[2], 'r') as genefile:
 	gene_list = [line.strip() for line in genefile]
 
 genefile.close()
+
+# determine chasm cutoff to use
+chasm_cutoff = 0.05
+if sys.argv[4] == 'fdr':
+	chasm_cutoff = 0.2
 
 with open (sys.argv[1], 'r') as csvfile:
 	reader = csv.DictReader(csvfile, delimiter='\t')
@@ -67,7 +72,7 @@ with open (sys.argv[1], 'r') as csvfile:
 		# Tier 3: >=2 damage_count
 		# Tier 4: 1 damage_count 
 		# Tier 5: else
-		if re.search('stop|^frameshift', row['mut_type']) or row['region_type'] == 'splicing' or (row['mut_type'] == 'nonsynonymous SNV' and chasm_pval < .05): 
+		if re.search('stop|^frameshift', row['mut_type']) or row['region_type'] == 'splicing' or (row['mut_type'] == 'nonsynonymous SNV' and chasm_pval < chasm_cutoff): 
 			tiers = 1
 		elif damage_count > 1 and (row['genename'] in gene_list or cosmic_count > 1):
 			tiers = 2
