@@ -10,6 +10,9 @@ outputPrefix = sys.argv[2]
 indexBaseDirectory = sys.argv[3]	#rsem reference $HOME/references/rsem_resources/hg19
 procs = sys.argv[4]
 
+# single end switch 
+single_end = sys.argv[5]
+
 sampleNames = set()
 # gets list of files based on the pattern passed at command line.
 dirList = glob.glob(inputFastqFilePattern)
@@ -34,7 +37,11 @@ fastqFilesR2 = sorted(fastqFilesR2)
 
 # rsem-calculate-expression -p [procs] --paired-end [fastq1] [fastq2]
 print "running rsem-calculate expression."
-cmd = 'rsem-calculate-expression -p ' + procs + ' --paired-end ' + ','.join(fastqFilesR1) + ' ' + ','.join(fastqFilesR2) + ' ' + indexBaseDirectory + ' ' + outputPrefix
-	
+print single_end
+if single_end == '1':
+	cmd = 'rsem-calculate-expression -p ' + procs + ','.join(fastqFilesR1) + ' ' + ','.join(fastqFilesR2) + ' ' + indexBaseDirectory + ' ' + outputPrefix
+else:
+	cmd = 'rsem-calculate-expression -p ' + procs + ' --paired-end ' + ','.join(fastqFilesR1) + ' ' + ','.join(fastqFilesR2) + ' ' + indexBaseDirectory + ' ' + outputPrefix
+
 print cmd
 call(cmd, shell=True)	
