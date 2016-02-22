@@ -61,7 +61,7 @@ else:
 		cmd = 'STAR --genomeDir ' + indexBaseDirectory + ' --readFilesIn ' + ','.join(fastqFilesR1) + ' ' + ','.join(fastqFilesR2) + ' --readFilesCommand zcat --runThreadN ' + procs + '' + ' --outSAMtype None --outFileNamePrefix ' + outputPrefix
 	else:
 		print 'Running second pass.'
-		cmd = 'STAR --genomeDir ' + indexBaseDirectory + ' --readFilesIn ' + ','.join(fastqFilesR1) + ' ' + ','.join(fastqFilesR2) + ' --readFilesCommand zcat --runThreadN ' + procs + '' + ' --sjdbFileChrStartEnd combinedSJ.out.tab --outSAMtype BAM SortedByCoordinate --quantMode TranscriptomeSAM --outFileNamePrefix ' + outputPrefix + ' --outSAMattrRGline ' + ' , '.join(readGroups)
+		cmd = 'STAR --genomeDir ' + indexBaseDirectory + ' --readFilesIn ' + ','.join(fastqFilesR1) + ' ' + ','.join(fastqFilesR2) + ' --readFilesCommand zcat --runThreadN ' + procs + '' + ' --sjdbFileChrStartEnd combinedSJ.out.tab --limitSjdbInsertNsj 2000000 --outSAMtype BAM SortedByCoordinate --quantMode TranscriptomeSAM --outFileNamePrefix ' + outputPrefix + ' --outSAMattrRGline ' + ' , '.join(readGroups)
 
 print cmd
 call(cmd, shell=True)	
