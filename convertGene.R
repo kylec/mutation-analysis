@@ -23,11 +23,11 @@ df$gene = as.character(df$gene)
 #TODO: modify for other gene column
 genes = df$gene
 
-# load ensembl genes
-human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+# load ensembl genes (hg19, and mm10)
+human = useMart(biomart="ENSEMBL_MART_ENSEMBL", host="grch37.ensembl.org", dataset = "hsapiens_gene_ensembl")
+mouse = useMart(biomart="ENSEMBL_MART_ENSEMBL", host="useast.ensembl.org", dataset = "mmusculus_gene_ensembl")
 
-# human to mouse genes
+# human to mouse genesa
 if (gene_type == "human") {
   genes_df = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = genes ,mart = human, attributesL = c("mgi_symbol"), martL = mouse)
   colnames(genes_df) = c("gene","newgene")
