@@ -141,6 +141,16 @@ for i in `ls ../source_data/  |grep -v ".sh" | sed 's/$PREFIX//g' | sort -n`; do
 PREFIX="Sample_H_G1"
 sh ~/mutation_analysis/rnaseq/htseq-count.sh $PREFIX
 ```
+### Mutect2
+```shell
+# import
+cat ../pairs.txt | while read p t n; do vtools import --build hg19 --format control/mutect2_vcf.fmt ../mutect/$t-$n.pass.vcf --sample_name $p-$t-P $p-$n-N; done
+# export
+less control/fap_torrent_report.header | vtools export variant --format control/mutect2_report.fmt --header - --output mutect.report --samples 'sample_name like "%"'
+less control/fap_torrent_report.header | vtools export variant --format control/mutect2_report.fmt --header - --output mutect-polyp.report --samples 'sample_name like "%-P"'
+# convert to sample mutation
+python ~/mutation-analysis/vtools_util/mutect2ReportBySampleMut.py -i mutect-polyp.report > mutect-polyp-sample.report
+```
 
 ## Ampliseq
 ```shell
