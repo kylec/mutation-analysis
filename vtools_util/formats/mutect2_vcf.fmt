@@ -1,0 +1,296 @@
+# Copyright (C) 2011 Bo Peng (bpeng@mdanderson.org) 
+# Distributed under GPL. see <http://www.gnu.org/licenses/>
+#
+# Please refer to http://varianttools.sourceforge.net/Format/New for
+# a description of the format of this file.
+
+[format description]
+description=Import vcf produced by the GATK 3.0 Unified Genotyper
+variant=chr,%(pos)s,%(ref)s,%(alt)s
+genotype=%(geno)s
+variant_info=%(var_info)s
+genotype_info=%(geno_info)s
+# variants with identical chr,pos,ref will be collapsed.
+export_by=chr,%(pos)s,%(ref)s
+
+[DEFAULT]
+format_string=GT:GQ:AD:AF:ALT_F1R2:REF_F1R2:FOXOG:QSS
+format_string_comment=FORMAT string that is output in the 9th column of
+    exported vcf file. Please specify an appropriate value corresponding to the
+    parameter --geno_info because this column cannot be automatically determined.
+
+# mutect2 format fields
+# GT:AD:AF:ALT_F1R2:ALT_F2R1:FOXOG:QSS:REF_F1R2:REF_F2R1	0/1:28,6:0.182:6:0:0.00:867,119:15:13
+geno_info=GQ_geno,AD_geno,AF_geno,ALT_F1R2_geno,REF_F1R2_geno,FOXOG_geno,QSS_geno
+geno_info_comment=Genotype information fields. No genotype field is imported by
+    default. You may edit it into, for example, "geno_info=GD,GQ,PL", if the .vcf
+    format field looks like "GT:GD:BQ:FA:Filter:SS:VT". Please check the FORMAT string of your .vcf 
+    file to determine available fields to be imported.
+
+geno=GT
+geno_comment=Field to extract genotype from .vcf file. You can set it to
+    safe_GT if genotype is not the first field in the genotype columns of your .vcf file.
+
+var_info=
+var_info_comment=Variant information fields to be imported. Please check the
+    INFO column of your vcf file for available fields.
+
+phase_sep='/'
+phase_sep_comment=Seperator used to output genotype, / for unphased and | for
+    phased. This parameter is needed because 'vtools import' does not save phase
+    information for each genotype.
+
+wildtype_code=('0',)
+wildtype_code_comment=How wildtype homozygotes are imported. These genotypes are
+    by default imported as GT=0. They will be discarded if you set this parameter
+    to None.
+
+id=
+id_comment=The field to output to the third (ID) column of the vcf file. You
+    can use a id field (if you imported or updated it from a vcf file), another ID field
+    (e.g. rsname) if available, or '' to output all missing values.
+
+pos=pos
+pos_comment=Field for position. To export indel, set it to 'pos-length(upstream)'
+
+ref=ref
+ref_comment=Field for reference allele
+
+alt=alt
+alt_comment=Field for alternative allele
+
+qual=
+qual_comment=Field for quality score
+
+filter=
+filter_comment=Field for filter status
+
+info=
+info_comment=Field for info status
+
+[field formatter]
+#
+# NOTE: if multiple records are collapsed, they are passed as tuples.
+# If no formatter is defined, the first value will be used in output.
+#
+fmt_GT=GenoFormatter(style='vcf')
+fmt_DP=IfMulti(Formatter('DP={[0]}'), Formatter('DP={}'))
+# if there are multiple alternative alleles, join them by ','
+#
+# not sure if we need to keep both JoinRecords and JoinFields
+fmt_alt=JoinRecords(',')
+fmt_raw_alt=JoinRecords(',')
+
+[col_1]
+field=chr
+# remove fields with empty chromosome
+adj=ValueOfNull(None)
+comment=chromosome
+
+[col_2]
+field=pos
+comment=position
+
+[col_3]
+field=%(id)s
+adj=ValueOfNull('.')
+comment=id
+
+[col_4]
+field=%(ref)s
+comment=reference allele
+
+[col_5]
+field=%(alt)s
+comment=alternative alleles
+
+[col_6]
+field=%(qual)s
+adj=ValueOfNull('0')
+comment=quality
+
+[col_7]
+field=%(filter)s
+adj=ValueOfNull('PASS')
+comment=filter
+
+[col_8]
+field=%(info)s
+adj=ValueOfNull('.'), JoinFields(';')
+comment=variant info
+
+[col_9]
+field=
+adj=Constant("%(format_string)s")
+comment=genotype format
+
+[col_10]
+field=%(geno)s,%(geno_info)s
+adj=JoinFields(':')
+comment=genotype
+
+
+[chr]
+index=1
+type=VARCHAR(20)
+adj=RemoveLeading('chr')
+comment=Chromosome
+
+[pos]
+index=2
+type=INTEGER NOT NULL
+comment=1-based position
+
+[raw_pos]
+index=2
+type=INTEGER
+comment=1-based position
+
+[id]
+index=3
+type=VARCHAR(48)
+adj=Nullify('.')
+comment=variant id (rs number or other IDs)
+
+[ref]
+index=4
+type=VARCHAR(255)
+comment=Reference allele, '-' for insertion.
+
+[alt]
+index=5
+adj=CheckSplit()
+type=VARCHAR(255)
+comment=Alternative allele, '-' for deletion.
+
+[raw_ref]
+index=4
+type=VARCHAR(255)
+comment=Reference allele, without remove common leading and ending nucleotide.
+
+[raw_alt]
+index=5
+adj=CheckSplit()
+type=VARCHAR(255)
+comment=Alternative allele, without remove common leading and ending nucleotide.
+
+[upstream]
+index=4,5
+adj=CommonLeading()
+type=VARCHAR(255)
+comment=Common leading alleles of ref and alt alleles stored in .vcf
+    file. This field is only available for indels.
+
+[downstream]
+index=4,5
+adj=CommonEnding()
+type=VARCHAR(255)
+comment=Common ending alleles of ref and alt alleles stored in .vcf 
+    file, common leading is extracted before common ending. This field
+    is only available for indels.
+
+[qual]
+index=6
+type=FLOAT
+comment=phred-scaled quality score for the assertion made in ALT. High QUAL scores indicate high confidence calls.
+
+[filter]
+index=7
+type=VARCHAR(255)
+comment=PASS if this position has passed all filters, i.e. a call is made at this position. Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. 
+
+[GT]
+index=10:
+type=INTEGER
+adj=VcfGenotype(default=%(wildtype_code)s)
+comment=Gentoype coded as 0 (ref ref), 1 (ref alt), 2 (alt alt) or -1 (alt1, alt2), assuming GT is the first FORMAT field in the .vcf file. Missing genotype will be dropped.
+
+[safe_GT]
+# This vcf genotype extractor uses format string and genotype to 
+# extract genotype. Although the format string should not be needed
+# because the genotype field should be the first one, one of my dataset
+# does not following this rule. The performance penalty is significant
+# 4.36 -> 3.03 for 50k records.
+index=9, 10:
+adj=VcfGenoFromFormat(default=%(wildtype_code)s)
+type=INTEGER
+comment=Gentoype coded as 0 (ref ref), 1 (ref alt), 2 (alt alt) or -1 (alt1, alt2). This field checks the FORMAT string and extract genotype accordingly. Missing genotype will be dropped.
+
+[info]
+index=8
+type=VARCHAR(255)
+comment=Raw INFO column in the vcf file. This may be further splitted into various specified info fields, such as DP, etc. 
+
+[GQ_geno]
+# Passing 'GT:DP\t0/0:64'
+index=9, 10:
+adj=FieldFromFormat('GQ', ':')
+type=FLOAT
+comment=GQ fields in INFO. Genotype Quality of each sample in a vcf file.
+
+[DP_geno]
+index=9, 10:
+adj=FieldFromFormat('DP', ':')
+type=INTEGER
+comment=Read depth.
+
+[AD_geno]
+index=9, 10:
+adj=FieldFromFormat('AD', ':')
+type=INTEGER
+comment=Allelic depth (ref,alt).
+
+[AF_geno]
+index=9, 10:
+adj=FieldFromFormat('AF', ':')
+type=FLOAT
+comment=Fraction alternate alleles (alt/total).
+
+[ALT_F1R2_geno]
+index=9, 10:
+adj=FieldFromFormat('ALT_F1R2', ':')
+type=INTEGER
+comment=Count of reads in R2 of a pair supporting alternate allele
+
+[REF_F1R2_geno]
+index=9, 10:
+adj=FieldFromFormat('REF_F1R2', ':')
+type=INTEGER
+comment=Count of reads in R2 of a pair supporting reference allele
+
+[FA_geno]
+index=9, 10:
+adj=FieldFromFormat('FA', ':')
+type=FLOAT
+comment=Fraction alternate alleles (alt/total).
+
+[FOXOG_geno]
+index=9, 10:
+adj=FieldFromFormat('FOXOG', ':')
+type=FLOAT
+comment=Fraction of reads with oxoG artifact
+
+[QSS_geno]
+index=9, 10:
+adj=FieldFromFormat('QSS', ':')
+type=INTEGER
+comment=Sum of base quality.
+
+[BQ_geno]
+index=9, 10:
+adj=FieldFromFormat('BQ', ':')
+type=FLOAT
+comment=Base quality.
+
+[SS_geno]
+index=9, 10:
+adj=FieldFromFormat('SS', ':')
+type=INTEGER
+comment=Somatic status of variant (0=Reference,1=Germline,2=Somatic,3=LOH,4=post-transcriptional or 5=Unknown).
+
+#[SOMATIC_geno]
+#index=8
+#adj=ExtractValue('SOMATIC', ';')
+#type=BOOL
+#comment=Indicates if record is a somatic mutatio.
+

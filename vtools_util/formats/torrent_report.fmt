@@ -1,0 +1,386 @@
+# Copyright (C) 2011 Bo Peng (bpeng@mdanderson.org) 
+# Distributed under GPL. see <http://www.gnu.org/licenses/>
+#
+# Please refer to http://varianttools.sourceforge.net/Format/New for
+# a description of the format of this file.
+
+[format description]
+description=Import vcf produced by the GATK 3.0 Unified Genotyper
+variant=chr,%(pos)s,%(ref)s,%(alt)s
+genotype=%(geno)s
+variant_info=%(var_info)s
+genotype_info=%(geno_info)s
+# variants with identical chr,pos,ref will be collapsed.
+export_by=chr,%(pos)s,%(ref)s,%(alt)s
+
+[DEFAULT]
+#format_string=GT:GQ:AD:DP:FA:BQ:SS
+format_string=GT:GQ:RO:AO:DP:AF:AAF
+format_string_comment=FORMAT string that is output in the 9th column of
+    exported vcf file. Please specify an appropriate value corresponding to the
+    parameter --geno_info because this column cannot be automatically determined.
+
+# torrent VCF
+# #CHROM    POS FORMAT  Vilar118
+# chr4  153267968   GT:GQ:DP:FDP:RO:FRO:AO:FAO:SAR:SAF:SRF:SRR:FSAR:FSAF:FSRF:FSRR  1/1:85:2718:399:40:11:2645:388:1562:1083:25:15:228:160:6:5
+#
+#geno_info=GQ_geno,AD_geno,DP_geno,FA_geno,BQ_geno,SS_geno
+geno_info=GQ_geno,RO_geno,AO_geno,DP_geno,AF_geno,AAF_geno
+geno_info_comment=Genotype information fields. No genotype field is imported by
+    default. You may edit it into, for example, "geno_info=GD,GQ,PL", if the .vcf
+    format field looks like "GT:GD:GQ:PL". Please check the FORMAT string of your .vcf 
+    file to determine available fields to be imported.
+
+geno=GT
+geno_comment=Field to extract genotype from .vcf file. You can set it to
+    safe_GT if genotype is not the first field in the genotype columns of your .vcf file.
+
+var_info=
+var_info_comment=Variant information fields to be imported. Please check the
+    INFO column of your vcf file for available fields.
+
+phase_sep='/'
+phase_sep_comment=Seperator used to output genotype, / for unphased and | for
+    phased. This parameter is needed because 'vtools import' does not save phase
+    information for each genotype.
+
+wildtype_code=('0',)
+wildtype_code_comment=How wildtype homozygotes are imported. These genotypes are
+    by default imported as GT=0. They will be discarded if you set this parameter
+    to None.
+
+id=dbSNP.name
+id_comment=The field to output to the third (ID) column of the vcf file. You
+    can use a id field (if you imported or updated it from a vcf file), another ID field
+    (e.g. rsname) if available, or '' to output all missing values.
+
+pos=pos
+pos_comment=Field for position. To export indel, set it to 'pos-length(upstream)'
+
+ref=ref
+ref_comment=Field for reference allele
+
+alt=alt
+alt_comment=Field for alternative allele
+
+qual=
+qual_comment=Field for quality score
+
+filter=
+filter_comment=Field for filter status
+
+info=
+info_comment=Field for info status
+
+#evs_ea_freq=cast(evs.EuropeanAmericanAltCount as real)/(evs.EuropeanAmericanAltCount+evs.EuropeanAmericanRefCount)
+#evs_ea_freq_comment=EVS project european american alternate allele frequence
+
+[field formatter]
+#
+# NOTE: if multiple records are collapsed, they are passed as tuples.
+# If no formatter is defined, the first value will be used in output.
+#
+#fmt_GT=GenoFormatter(style='genotype',sep='/')
+fmt_GT=GenoFormatter(style='numeric')
+fmt_DP=IfMulti(Formatter('DP={[0]}'), Formatter('DP={}'))
+# if there are multiple alternative alleles, join them by ','
+#
+# not sure if we need to keep both JoinRecords and JoinFields
+fmt_alt=JoinRecords(',')
+fmt_raw_alt=JoinRecords(',')
+
+[col_1]
+field=variant.chr
+adj=ValueOfNull('.')
+comment=chromosome
+
+[col_2]
+field=variant.pos
+adj=ValueOfNull('.')
+comment=hg19 position
+
+[col_3]
+field=variant.pos
+adj=ValueOfNull('.')
+comment=hg19 position
+
+[col_4]
+field=%(id)s
+adj=ValueOfNull('.')
+comment=id
+
+[col_5]
+field=%(ref)s
+adj=ValueOfNull('.')
+comment=reference allele
+
+[col_6]
+field=variant.alt
+#adj=lambda x: x.split('\t')[0]
+comment=alternative alleles
+
+[col_7]
+field=variant.region_type
+adj=ValueOfNull('.')
+comment=Genomic region type where this variant lies
+
+[col_8]
+field=variant.region_name
+adj=ValueOfNull('.')
+comment=Name of the genomic region where this variant lies
+
+[col_9]
+field=variant.mut_type
+adj=ValueOfNull('.')
+comment=Exonic mutation type as defined by Annovar
+
+[col_10]
+field=variant.genename
+adj=ValueOfNull('.')
+comment=Gene name as provided by Annovar
+
+[col_11]
+field=evs.GeneAccession
+adj=ValueOfNull('.')
+comment=NCBI mRNA transcripts accession number.
+
+[col_12]
+field=evs.AminoAcidChange
+adj=ValueOfNull('.')
+comment=The corresponding amino acid change for a SNP.
+
+[col_13]
+field=evs.ProteinPos
+adj=ValueOfNull('.')
+comment=The coresponding amino acid postion in a protein
+
+[col_14]
+field=evs.cDNAPos
+adj=ValueOfNull('.')
+comment=The coresponding cDNA postion for a SNP.
+
+[col_15]
+field=dbNSFP.Uniprot_acc
+adj=ValueOfNull('.')
+comment=uniprot accession
+
+[col_16]
+field=dbNSFP.Uniprot_aapos
+adj=ValueOfNull('.')
+comment=uniprot amino acid pos
+
+[col_17]
+field=dbNSFP.aaref
+adj=ValueOfNull('.')
+comment=reference amino acid
+
+[col_18]
+field=dbNSFP.aaalt
+adj=ValueOfNull('.')
+comment=alternate amino acid
+
+#[col_11]
+#field=%(evs_ea_freq)s
+#adj=ValueOfNull('.')
+#comment=quality
+
+[col_19]
+field=thousandGenomesEBI.EUR_AF_INFO
+adj=ValueOfNull('.')
+comment=Allele frequency for samples from EUR based on AC/AN
+
+[col_20]
+field=dbNSFP.PhyloP_score
+adj=ValueOfNull('.')
+comment=PhyloP score, the larger the score, the more conserved the site.
+
+[col_21]
+field=dbNSFP.SIFT_score
+adj=ValueOfNull('.')
+comment=SIFT score, If a score is smaller than 0.05 the corresponding NS is predicted as "D(amaging)"; otherwise it is predicted as "T(olerated)".
+
+[col_22]
+field=dbNSFP.Polyphen2_HDIV_pred
+adj=ValueOfNull('.')
+comment=Polyphen2 prediction based on HumDiv, "D" ("probably damaging"), "P" ("possibly damaging") and "B" ("benign"). Multiple entries separated by ";".
+
+[col_23]
+field=dbNSFP.Polyphen2_HVAR_pred
+adj=ValueOfNull('.')
+comment=Polyphen2 prediction based on HumVar, "D" ("porobably damaging"), "P" ("possibly damaging") and "B" ("benign"). Multiple entries separated by ";".
+
+[col_24]
+field=dbNSFP.LRT_pred
+adj=ValueOfNull('.')
+comment=LRT prediction, D(eleterious), N(eutral) or U(nknown)
+
+[col_25]
+field=dbNSFP.MutationTaster_pred
+adj=ValueOfNull('.')
+comment=MutationTaster prediction, "A" ("disease_causing_automatic"), "D" ("disease_causing"), "N" ("polymorphism") or "P" ("polymorphism_automatic")
+
+[col_26]
+field=dbNSFP.MutationAssessor_pred
+adj=ValueOfNull('.')
+comment=MutationAssessor "functional impact of a variant : predicted functional (high, medium), predicted non-functional (low, neutral)" Please refer to Reva et al. Nucl. Acids Res. (2011) 39(17):e118 for details
+
+[col_27]
+field=evs.EuropeanAmericanRefCount
+adj=ValueOfNull('.')
+comment=EuropeanAmericanRefCount
+
+[col_28]
+field=evs.EuropeanAmericanAltCount
+adj=ValueOfNull('.')
+comment=EuropeanAmericanAltCount
+
+[col_29]
+field=CosmicCodingMuts.COSMIC_ID
+adj=ValueOfNull('.')
+comment=genotype format
+
+[col_30]
+field=CosmicCodingMuts.CNT
+adj=ValueOfNull('.')
+comment=genotype format
+
+[col_31]
+field=
+adj=Constant("%(format_string)s")
+comment=genotype format
+
+[col_32]
+field=%(geno)s,%(geno_info)s
+adj=JoinFields(':')
+comment=genotype
+
+[chr]
+index=1
+type=VARCHAR(20)
+adj=RemoveLeading('chr')
+comment=Chromosome
+
+[pos]
+index=2
+type=INTEGER NOT NULL
+comment=1-based position
+
+[raw_pos]
+index=2
+type=INTEGER
+comment=1-based position
+
+[id]
+index=3
+type=VARCHAR(48)
+adj=Nullify('.')
+comment=variant id (rs number or other IDs)
+
+[ref]
+index=4
+type=VARCHAR(255)
+comment=Reference allele, '-' for insertion.
+
+[alt]
+index=5
+adj=CheckSplit()
+type=VARCHAR(255)
+comment=Alternative allele, '-' for deletion.
+
+[raw_ref]
+index=4
+type=VARCHAR(255)
+comment=Reference allele, without remove common leading and ending nucleotide.
+
+[raw_alt]
+index=5
+adj=CheckSplit()
+type=VARCHAR(255)
+comment=Alternative allele, without remove common leading and ending nucleotide.
+
+[upstream]
+index=4,5
+adj=CommonLeading()
+type=VARCHAR(255)
+comment=Common leading alleles of ref and alt alleles stored in .vcf
+    file. This field is only available for indels.
+
+[downstream]
+index=4,5
+adj=CommonEnding()
+type=VARCHAR(255)
+comment=Common ending alleles of ref and alt alleles stored in .vcf 
+    file, common leading is extracted before common ending. This field
+    is only available for indels.
+
+[qual]
+index=6
+type=FLOAT
+comment=phred-scaled quality score for the assertion made in ALT. High QUAL scores indicate high confidence calls.
+
+[filter]
+index=7
+type=VARCHAR(255)
+comment=PASS if this position has passed all filters, i.e. a call is made at this position. Otherwise, if the site has not passed all filters, a semicolon-separated list of codes for filters that fail. 
+
+[GT]
+index=10:
+type=INTEGER
+adj=VcfGenotype(default=%(wildtype_code)s)
+comment=Gentoype coded as 0 (ref ref), 1 (ref alt), 2 (alt alt) or -1 (alt1, alt2), assuming GT is the first FORMAT field in the .vcf file. Missing genotype will be dropped.
+
+[safe_GT]
+# This vcf genotype extractor uses format string and genotype to 
+# extract genotype. Although the format string should not be needed
+# because the genotype field should be the first one, one of my dataset
+# does not following this rule. The performance penalty is significant
+# 4.36 -> 3.03 for 50k records.
+index=9, 10:
+adj=VcfGenoFromFormat(default=%(wildtype_code)s)
+type=INTEGER
+comment=Gentoype coded as 0 (ref ref), 1 (ref alt), 2 (alt alt) or -1 (alt1, alt2). This field checks the FORMAT string and extract genotype accordingly. Missing genotype will be dropped.
+
+[info]
+index=8
+type=VARCHAR(255)
+comment=Raw INFO column in the vcf file. This may be further splitted into various specified info fields, such as DP, etc. 
+
+# adjusted AF
+[AAF_geno]
+index=9, 10:
+adj=FieldFromFormat('AAF', ':')
+type=FLOAT
+comment=AAF fields in INFO. adjusted AF field in INFO
+
+# AF
+[AF_geno]
+index=9, 10:
+adj=FieldFromFormat('AF', ':')
+type=FLOAT
+comment=AF fields in INFO. AF field in INFO
+
+[GQ_geno]
+# Passing 'GT:DP\t0/0:64'
+index=9, 10:
+adj=FieldFromFormat('GQ', ':')
+type=FLOAT
+comment=GQ fields in INFO. Genotype Quality of each sample in a vcf file.
+
+[RO_geno]
+index=9, 10:
+adj=FieldFromFormat('RO', ':')
+type=INTEGER
+comment=Ref depth.
+
+[AO_geno]
+index=9, 10:
+adj=FieldFromFormat('AO', ':')
+type=INTEGER
+comment=Allelic depth (ref,alt).
+
+[DP_geno]
+index=9, 10:
+adj=FieldFromFormat('DP', ':')
+type=INTEGER
+comment=Read depth.
+

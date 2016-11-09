@@ -1,0 +1,1 @@
+added evs_ea_freq, CGC.TissueType CGC.CancerSyndrome to mutect_report.fmt and mutect_report.header
