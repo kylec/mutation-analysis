@@ -1,6 +1,6 @@
 # Assumes you've already run coverageBed -hist, and grep'd '^all'. E.g. something like:
 # find *.bam | parallel 'bedtools -abam {} -b capture.bed -hist | grep ^all > {}.all.txt'
-
+library(plyr)
 # Get a list of the bedtools output files you'd like to read in
 
 ## @knitr readplot
@@ -81,6 +81,7 @@ library(ggplot2)
 textsize=9
 dddord=ddd[order(ddd$median), ]
 dddord$sample = factor(dddord$sample, levels = dddord$sample)
+write.table(ddd,"fap_ampliseq_coverage_summary.txt", sep="\t", col.names=T, row.names=F, quote=F)
 #ggplot(data=dddord, aes(x=sample, y=median, fill=type)) + geom_point(aes(colour=type)) +  
 #  theme(legend.position="top", axis.text.x = element_text(size=textsize, angle=45, hjust=1),
 #        axis.text.y = element_text(size=textsize))
@@ -103,4 +104,23 @@ a= read.table("cov.txt", header=T)
 head(a)
 hist(a$af, breaks=seq(0,1,by=.005), xaxt='n',main="Allele fraction of somatic snv", xlab="Alelle fraction")
 axis(side=1, at=seq(0,1,by=.05))
+
+
+# genes depth
+covfiles = system("ls *cov.txt", intern=T)
+df = NULL
+for (i in covfiles) {
+  a = read.table(i, sep="\t", header=F)
+  a$depth = a$V7*a$V8
+  head(a)
+  b=ddply(a[,c("V1","V2","V3","V4","V6","V9","depth")], .(V1,V2,V3,V4,V6,V9), summarise, amp_depth = sum(depth))
+  c = ddply(b,.(V6), summarise, tot_length=sum(V9), tot_depth=sum(amp_depth))
+  c$mean_depth = c$tot_depth/c$tot_length
+  c$sample = gsub(".cov.txt","",i)
+  df = rbind(df,c)
+}
+
+library(reshape2)
+ddf = dcast(df,V6~sample, value.var="mean_depth")
+write.table(ddf,"average_gene_depth.txt",row.names=F, col.names=T, quote=F, sep="\t")
 
