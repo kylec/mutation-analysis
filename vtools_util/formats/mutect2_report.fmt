@@ -67,7 +67,7 @@ filter_comment=Field for filter status
 info=
 info_comment=Field for info status
 
-#evs_ea_freq=cast(evs.EuropeanAmericanAltCount as real)/(evs.EuropeanAmericanAltCount+evs.EuropeanAmericanRefCount)
+evs_ea_freq=cast(evs.EuropeanAmericanAltCount as real)/(evs.EuropeanAmericanAltCount+evs.EuropeanAmericanRefCount)
 #evs_ea_freq_comment=EVS project european american alternate allele frequence
 
 [field formatter]
@@ -174,18 +174,13 @@ field=dbNSFP.aaalt
 adj=ValueOfNull('.')
 comment=alternate amino acid
 
-#[col_11]
-#field=%(evs_ea_freq)s
-#adj=ValueOfNull('.')
-#comment=quality
-
 [col_19]
-field=thousandGenomesEBI.EUR_AF_INFO
+field=EUR_AF
 adj=ValueOfNull('.')
 comment=Allele frequency for samples from EUR based on AC/AN
 
 [col_20]
-field=dbNSFP.PhyloP_score
+field=phyloP46way_primate
 adj=ValueOfNull('.')
 comment=PhyloP score, the larger the score, the more conserved the site.
 
@@ -232,19 +227,49 @@ comment=EuropeanAmericanAltCount
 [col_29]
 field=CosmicCodingMuts.COSMIC_ID
 adj=ValueOfNull('.')
-comment=genotype format
+comment=CosmicCodingMuts.COSMIC_ID
 
 [col_30]
 field=CosmicCodingMuts.CNT
 adj=ValueOfNull('.')
-comment=genotype format
+comment=CosmicCodingMuts.CNT
 
 [col_31]
+field=%(evs_ea_freq)s
+adj=ValueOfNull('.')
+comment=quality
+
+[col_32]
+field=CancerGeneCensus.CancerSyndrome
+adj=ValueOfNull('.')
+comment=Syndrome linked to this variant
+
+[col_33]
+field=CancerGeneCensus.TissueType
+adj=ValueOfNull('.')
+comment=Tissue linked to this variant
+
+[col_34]
+field=clinvar_clnsig
+adj=ValueOfNull('.')
+comment=ClinVar Significance
+
+[col_35]
+field=clinvar_trait
+adj=ValueOfNull('.')
+comment=ClinVar trait
+
+[col_36]
+field=ExAC.ALL_MAF
+adj=ValueOfNull('.')
+comment=ExAC.ALL_MAF
+
+[col_37]
 field=
 adj=Constant("%(format_string)s")
 comment=genotype format
 
-[col_32]
+[col_38]
 field=%(geno)s,%(geno_info)s
 adj=JoinFields(':')
 comment=genotype
