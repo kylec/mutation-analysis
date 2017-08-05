@@ -15,13 +15,11 @@ export_by=chr,%(pos)s,%(ref)s,%(alt)s
 
 [DEFAULT]
 format_string=GT:GQ:AD:DP:FA:BQ:SS:AAF
-#format_string=GT:GQ:DP:RD:AD:FREQ:DP4:SS:SSC:GPV:SPV
 format_string_comment=FORMAT string that is output in the 9th column of
     exported vcf file. Please specify an appropriate value corresponding to the
     parameter --geno_info because this column cannot be automatically determined.
 
 # removed GQ_geno
-#geno_info=FILTER_geno,DP_geno,RD_geno,AD_geno,FREQ_geno,DP4_geno,SS_geno,SSC_geno,GPV_geno,SPV_geno
 geno_info=GQ_geno,AD_geno,DP_geno,FA_geno,BQ_geno,SS_geno,AAF_geno
 geno_info_comment=Genotype information fields. No genotype field is imported by
     default. You may edit it into, for example, "geno_info=GD,GQ,PL", if the .vcf
@@ -177,7 +175,7 @@ adj=ValueOfNull('.')
 comment=alternate amino acid
 
 [col_19]
-field=thousandGenomes.EUR_AF_INFO
+field=EUR_AF
 adj=ValueOfNull('.')
 comment=Allele frequency for samples from EUR based on AC/AN
 
@@ -229,12 +227,12 @@ comment=EuropeanAmericanAltCount
 [col_29]
 field=CosmicCodingMuts.COSMIC_ID
 adj=ValueOfNull('.')
-comment=genotype format
+comment=CosmicCodingMuts.COSMIC_ID
 
 [col_30]
 field=CosmicCodingMuts.CNT
 adj=ValueOfNull('.')
-comment=genotype format
+comment=CosmicCodingMuts.CNT
 
 [col_31]
 field=%(evs_ea_freq)s
@@ -262,11 +260,16 @@ adj=ValueOfNull('.')
 comment=ClinVar trait
 
 [col_36]
+field=ExAC.ALL_MAF
+adj=ValueOfNull('.')
+comment=ExAC.ALL_MAF
+
+[col_37]
 field=
 adj=Constant("%(format_string)s")
 comment=genotype format
 
-[col_37]
+[col_38]
 field=%(geno)s,%(geno_info)s
 adj=JoinFields(':')
 comment=genotype
