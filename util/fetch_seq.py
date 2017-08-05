@@ -1,11 +1,14 @@
-# fetch flanking sequence a list of snv sites
+#!/usr/bin/env python
+#
+# fetch flanking sequence of the exon boundaries where the snv is sitting in
 # print fasta format
 # > ref_seq
 # ATATTTTTCGAGT
 # > alt_seq
 # ATTTAACGAGAGT
 #
-# Kyle Chang
+# usage:
+# python2 fetch_seq.py -i input.txt -bp 120 -tx
 import argparse
 import re
 import glob
@@ -14,13 +17,14 @@ from subprocess import check_output
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', dest='input')
 parser.add_argument('-bp', dest='basepair')
+parser.add_argument('-tx', dest='tx_id')
 args = parser.parse_args()
 
-ref = '/usr/local/epi/home/kchang3/references/ucsc.hg19.fasta'
+ref = '/rsrch2/ccp_rsch/kchang3/references/ucsc.hg19.fasta'
 
 # load exon boundaries
 exon_dict = dict()
-exons = glob.glob('Exon*.csv')
+exons = glob.glob('/rsrch2/ccp_rsch/kchang3/kchang3/for_ester/Exon*.csv')
 for exon in exons:
     exon_file = open(exon, 'r')
     m = re.search('ENST\d+', exon)
@@ -32,6 +36,7 @@ for exon in exons:
     # save key and list
     exon_dict[key] = exon_list
 
+
 file = open(args.input, 'r')
 for line in file:
     data = line.rstrip('\n').split('\t')
@@ -40,11 +45,11 @@ for line in file:
     snv_start = int(data[1])
     ref_allele = data[2]
     var_allele = data[3]
-    tx_id = data[4]
+    #tx_id = data[4]
     
     # lookup exon boundaries covering the snv
     exon_start = exon_end = 0
-    for start, end in exon_dict[tx_id]:
+    for start, end in exon_dict[args.tx_id]:
         #print "looping list...", start,end
         if start <= snv_start & snv_start <= end:
             exon_start = start
