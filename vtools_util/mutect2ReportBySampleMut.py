@@ -51,8 +51,15 @@ for line in file:
       dat = field.split(':')
       
       af = dat[3]
-		
-      print mutfields + '\t' + field + '\t' + samples[index] + '\t' + af
+      
+      # if not AF field, use, AD field to calculate 
+      #print "af = " + af
+      #print type(af)
+      if af != "." and float(af) > 1:
+        counts = dat[1].split(',')
+        af = round(float(counts[1])/(float(counts[0]) + float(counts[1])),4)
+				
+      print mutfields + '\t' + field + '\t' + samples[index] + '\t' + str(af)
       
     index = index + 1
 
