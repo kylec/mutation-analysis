@@ -1,4 +1,6 @@
 #!/usr/bin/python
+
+#example: python2.7 submitBwa.py dir/*fastq.gz sample_name ~/references/hg38.fasta 16
 import sys
 import glob
 import os
