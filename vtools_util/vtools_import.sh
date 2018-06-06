@@ -1,35 +1,11 @@
-PROJ=$1
-VCFPATH=$2
-PAIRS=${3-"../pairs.txt"}
+# mutect import example
+for vcf in `ls *.pass.vcf`; do 
+	t=`echo $vcf | cut -d- -f1`
+	n=`echo $vcf | | cut -d- -f2 | cut -d. -f1`
+	vtools import --build hg19 --format ~/mutation-analysis/vtools_util/formats/mutect2_vcf.fmt $vcf --sample_name $t $n
+done
 
-# usage
-# ~/mutation-analysis/vtools_util/vtools_import.sh lynch "../mutect/*apcmmr.vcf" ../pairs.txt
-
-if [ ! -f "$PROJ.proj" ]; then
-	echo "`date` Init project $PROJ"
-	vtools init $PROJ
-else 
-	echo "`date` $PROJ present"
-fi
-
-if [ ! -f "ANNOVAR.input" ]; then 
-	echo "`date` load vcf"
-	#for a in $VCFPATH; do vtools import --build hg19 --format control/mutect2_vcf.fmt $a; done
-	cat $PAIRS | while read p t n; do 
-		vcf=`ls $VCFPATH | grep $t-$n`
-		echo $vcf
-		if [ -f "$vcf" ]; then
-			#vtools import --build hg19 --format ~/mutation-analysis/vtools_util/formats/mutect2_vcf.fmt $vcf --sample_name $p-$t-P $p-$n-N
-			vtools import --build hg19 --format ~/mutation-analysis/vtools_util/formats/mutect2_vcf.fmt $vcf --sample_name $t $n
-		else
-			echo "WARNING: $vcf missing."
-		fi 
-	done
-else
-	echo "`date` annovar input present. assume vcf has been laoded. skip load vcf step."
-fi
-
-# vtools annotations
+# add vtools annotations
 vtools use refGene-hg19_20130904
 vtools use CancerGeneCensus-20130711 --linked_by refGene.name2
 vtools use dbSNP-hg19_138
