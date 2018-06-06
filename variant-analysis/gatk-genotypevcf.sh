@@ -1,27 +1,28 @@
 #!/usr/bin/env bash
 
-#usage - sh gatk-genotypevcf.sh [output prefix] [gvf list]
+#usage - sh gatk-genotypevcf.sh [output prefix] [build]
 
 java8=/risapps/noarch/jdk/jdk1.8.0_45/bin/java
 
 OUTPREFIX=$1
-GVCFLIST=$2
-REF=$HOME/references/ucsc.hg19.fasta
-MILLS=$HOME/references/gatk-bundle/Mills_and_1000G_gold_standard.indels.hg19.vcf
-PHASE1=$HOME/references/gatk-bundle/1000G_phase1.snps.high_confidence.hg19.vcf
-OMNI=$HOME/references/gatk-bundle/1000G_omni2.5.hg19.vcf
-DBSNP=$HOME/references/gatk-bundle/dbsnp_138.hg19.vcf
-HAPMAP=$HOME/references/gatk-bundle/hapmap_3.3.hg19.vcf
+BUILD=$2
 
-#ouputfiles
+# get reference config
+source ~/mutation-analysis/config.sh $BUILD
+
+# ouputfiles
+GVCFLIST=gvcf.list
 RAWVCF=$OUTPREFIX.vcf
 RECALSNPVCF=$OUTPREFIX.recalsnp.vcf
 RECALSNPINDELVCF=$OUTPREFIX.recalsnpindel.vcf
 
-# collect gvcf files
+# generate gvcf list
+ls *.g.vcf > $GVCFLIST
+
+# genotype gvcf files
 if [ ! -f "$RAWVCF" ]; then 
 echo "`date` Genotype gvcf"
-	$java8 -jar $HOME/bin/GenomeAnalysisTK.jar -T GenotypeGVCFs -R $REF --variant $GVCFLIST -o $RAWVCF
+	$java8 -jar $HOME/bin/GenomeAnalysisTK.jar -T GenotypeGVCFs -R $REF --variant $GVCFLIST -o $RAWVCF -newQual
 else
 	echo "`date` $RAWVCF present"
 fi
@@ -31,7 +32,7 @@ if [ "$?" != 0 ]; then echo "FAILURE: GenotypeGVCFs failed."; exit 1; fi
 # build snp recal model
 if [ ! -f "recalibrate_SNP.recal" ]; then
 	echo "`date` snp recal model"
-	$java8 -jar $HOME/bin/GenomeAnalysisTK.jar -T VariantRecalibrator -R $REF -input $RAWVCF -resource:hapmap,known=false,training=true,truth=true,prior=15.0 $HAPMAP -resource:omni,known=false,training=true,truth=true,prior=12.0 $OMNI -resource:1000G,known=false,training=true,truth=false,prior=10.0 $PHASE1 -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 $DBSNP -an QD -an FS -an SOR -an MQ -an MQRankSum -an ReadPosRankSum -an InbreedingCoeff -mode SNP -recalFile recalibrate_SNP.recal -tranchesFile recalibrate_SNP.tranches -rscriptFile recalibrate_SNP_plots.R 
+	$java8 -jar $HOME/bin/GenomeAnalysisTK.jar -T VariantRecalibrator -R $REF -input $RAWVCF -resource:hapmap,known=false,training=true,truth=true,prior=15.0 $HAPMAP -resource:omni,known=false,training=true,truth=true,prior=12.0 $OMNI -resource:1000G,known=false,training=true,truth=false,prior=10.0 $PHASE1_SNP -resource:dbsnp,known=true,training=false,truth=false,prior=2.0 $DBSNP -an QD -an FS -an SOR -an MQ -an MQRankSum -an ReadPosRankSum -an InbreedingCoeff -mode SNP -recalFile recalibrate_SNP.recal -tranchesFile recalibrate_SNP.tranches -rscriptFile recalibrate_SNP_plots.R 
 else 
 	echo "`date` recalibrate_SNP.recal present."
 fi

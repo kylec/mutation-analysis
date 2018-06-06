@@ -1,37 +1,42 @@
-#get header
+#!/usr/bin/env bash
+
+# gatk recal bam
+# usage:
+# sh gatk-dna-bamprocess.sh [SAMPLEple name] [build(hg19/hg38)]
+
 java8=/risapps/noarch/jdk/jdk1.8.0_45/bin/java
-java=/risapps/noarch/jdk/jdk1.7.0_79/bin/java
-PICARD_PATH=/risapps/noarch/picard/2.5.0/dist
-sam=$1 
+SAMPLE=$1 
+BUILD=$2
 TMPDIR=$PWD
 MEM=16g
-REF=$HOME/references/ucsc.hg19.fasta
-#FIX<E change me back to .sam
-RAWSAM=$sam.bam
-SOBAM=$sam.sorted.bam
-MDBAM=$sam.sorted.dedup.bam
-RCBAM=$sam.sorted.dedup.recal.bam
-RCBAI=$sam.sorted.dedup.recal.bai
-HAPVCF=$sam.g.vcf
 
-RALIST=$sam\_realignment_targets.list
-RCTABLE=$sam\_recal_data.table
-PRCTABLE=$sam\_post_recal_data.table
-BQPLOT=$sam\_recalibration_plots.pdf
-GOLDVCF1=$HOME/references/gatk-bundle/Mills_and_1000G_gold_standard.indels.hg19.vcf
-GOLDVCF2=$HOME/references/gatk-bundle/1000G_phase1.indels.hg19.vcf
-DBSNP=$HOME/references/gatk-bundle/dbsnp_138.hg19.vcf
+# source reference
+source ~/mutation-analysis/config.sh $BUILD
+
+#FIX change me back to .SAMPLE
+#RAWSAM=$SAMPLE.bam
+RAWSAM=$SAMPLE.sam
+SOBAM=$SAMPLE.sorted.bam
+MDBAM=$SAMPLE.sorted.dedup.bam
+RCBAM=$SAMPLE.sorted.dedup.recal.bam
+RCBAI=$SAMPLE.sorted.dedup.recal.bai
+
+RALIST=$SAMPLE\_realignment_targets.list
+RCTABLE=$SAMPLE\_recal_data.table
+PRCTABLE=$SAMPLE\_post_recal_data.table
+BQPLOT=$SAMPLE\_recalibration_plots.pdf
+ALIGN_SUM=$SAMPLE\_alignment_summary.txt
 
 
 # sort, dedup, index 
 if [ ! -f "$MDBAM" ]; then
 	echo "`date` Sort SAM."
-	#sort sam
+	#sort SAMPLE
 	$java8 -Xmx10g -jar $PICARD_PATH/picard.jar SortSam INPUT=$RAWSAM OUTPUT=$SOBAM SORT_ORDER=coordinate 
 
 	echo "`date` mark dups."
 	#mark duplicates
-	$java8 -Xmx10g -jar $PICARD_PATH/picard.jar MarkDuplicates INPUT=$SOBAM OUTPUT=$MDBAM METRICS_FILE=$sam\_picard.metrics
+	$java8 -Xmx10g -jar $PICARD_PATH/picard.jar MarkDuplicates INPUT=$SOBAM OUTPUT=$MDBAM METRICS_FILE=$SAMPLE\_picard.metrics
 
 	echo "`date` index."
 	$java8 -Xmx10g -jar $PICARD_PATH/picard.jar BuildBamIndex INPUT=$MDBAM
@@ -44,18 +49,16 @@ else
 	echo "`date` dedup bam present."
 fi
 
-#exit 0
-
 # recal
 if [ ! -f "$RCBAM" ]; then
 	echo "`date` base recal1."
 	# base recal
-	$java8 -Xmx$MEM -jar $HOME/bin/GenomeAnalysisTK.jar -T BaseRecalibrator -R $REF -I $MDBAM -knownSites $DBSNP -knownSites $GOLDVCF1 --knownSites $GOLDVCF2 -o $RCTABLE
+	$java8 -Xmx$MEM -jar $HOME/bin/GenomeAnalysisTK.jar -T BaseRecalibrator -R $REF -I $MDBAM -knownSites $DBSNP -knownSites $MILLS --knownSites $PHASE1_INDEL -o $RCTABLE
 	if [ "$?" != 0 ]; then echo "FAIL: base recal1"; exit 1; fi
 
 	echo "`date` base recal2."
 	# base recal2 
-	$java8 -jar $HOME/bin/GenomeAnalysisTK.jar -T BaseRecalibrator -R $REF -I $MDBAM -knownSites $DBSNP -knownSites $GOLDVCF1 --knownSites $GOLDVCF2 -BQSR $RCTABLE -o $PRCTABLE
+	$java8 -jar $HOME/bin/GenomeAnalysisTK.jar -T BaseRecalibrator -R $REF -I $MDBAM -knownSites $DBSNP -knownSites $MILLS --knownSites $PHASE1_INDEL -BQSR $RCTABLE -o $PRCTABLE
 	if [ "$?" != 0 ]; then echo "FAIL: base recal2"; exit 1; fi
 
 	echo "`date` base recal plot."
@@ -71,17 +74,15 @@ else
 	echo "`date` $RCBAM present."
 fi
 
-if [ ! -f "$HAPVCF" ]; then
-  
-	if [ ! -f "$RCBAI" ]; then
-		$java8 -Xmx10g -jar $PICARD_PATH/picard.jar BuildBamIndex INPUT=$RCBAM
-	fi
-
-	echo "`date` run haplotyper"
-  $java8 -jar $HOME/bin/GenomeAnalysisTK.jar -T HaplotypeCaller -R $REF -I $RCBAM --emitRefConfidence GVCF --genotyping_mode DISCOVERY -stand_emit_conf 30 -stand_call_conf 30 -o $HAPVCF --dbsnp $DBSNP
-  if [ "$?" != 0 ]; then echo "FAIL: haplotyper"; exit 1; fi
-else
-  echo "`date` $HAPVCF is present."
+# alignment stats
+if [ ! -f "$ALIGN_SUM" ]; then
+	echo "`date` picard alignment summary."
+	$java8 -Xmx10g -jar $PICARD_PATH/picard.jar CollectAlignmentSummaryMetrics R=$REF I=$RCBAM O=$ALIGN_SUM
+	if [ "$?" != 0 ]; then echo "FAIL: alignment summary"; exit 1; fi
+	$java8 -Xmx10g -jar $PICARD_PATH/picard.jar CollectInsertSizeMetrics I=$RCBAM O=$SAMPLE\_insertsize.txt H=$SAMPLE\_insertsize.pdf M=0.5
+	if [ "$?" != 0 ]; then echo "FAIL: insert size metric"; exit 1; fi
+else 
+	echo "`date` $ALIGN_SUM present."
 fi
 
 echo "`date` Done"
