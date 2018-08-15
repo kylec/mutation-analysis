@@ -28,13 +28,14 @@ elif [ "$BUILD" == "iot" ]; then
 	DBSNP=$HOME/references/dbsnp_137.iot.vcf
 elif [ "$BUILD" == "hg38" ]; then
 	REF=$HOME/references/hg38/gatk-bundle/Homo_sapiens_assembly38.fasta
-	#COSMIC=
+	COSMIC=$HOME/references/hg38/CosmicCodingMuts_chr_M_sorted.vcf
 	DBSNP=$HOME/references/hg38/gatk-bundle/dbsnp_146.hg38.vcf.gz
 	MILLS=$HOME/references/hg38/gatk-bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
 	PHASE1_INDEL=$HOME/references/hg38/gatk-bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
 	PHASE1_SNP=$HOME/references/hg38/gatk-bundle/1000G_phase1.snps.high_confidence.hg38.vcf
 	OMNI=$HOME/references/hg38/gatk-bundle/1000G_omni2.5.hg38.vcf
-	HAPMAP=$HOME/references/gatk-bundle/hapmap_3.3.hg38.vcf
+	HAPMAP=$HOME/references/hg38/gatk-bundle/hapmap_3.3.hg38.vcf
+	COVERAGE_RANGE=/rsrch2/epi/scheet/TEAM_ROOT/reference/genomics/Hsap/GRCh38.d1.vd1/GRCh38.d1.vd1.chromosomes.bed
 else
     echo "ERROR: unknown build=$BUILD."
     exit 1
@@ -44,3 +45,7 @@ fi
 CAPTURE_FILE=$HOME/references/hg38/S30409818_Padded_hg38.bed
 #CAPTURE_FILE=$HOME/references/hg38/test-capture.bed
 
+find_bam() {
+	BAM=`ls $PWD/bam/*.bam | grep -w $1`
+	echo $BAM
+}
